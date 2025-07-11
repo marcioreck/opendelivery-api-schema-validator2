@@ -1,352 +1,372 @@
-# OpenDelivery API Schema Validator Support Guide
+# OpenDelivery API Schema Validator 2 - Guia de Suporte
 
-## Table of Contents
-1. [Usage Instructions](#usage-instructions)
-2. [Maintenance Procedures](#maintenance-procedures)
-3. [Troubleshooting](#troubleshooting)
-4. [API Documentation](#api-documentation)
+## Índice
+1. [Instruções de Uso](#instruções-de-uso)
+2. [Procedimentos de Manutenção](#procedimentos-de-manutenção)
+3. [Solução de Problemas](#solução-de-problemas)
+4. [Documentação da API](#documentação-da-api)
+5. [Documentação de Testes](#documentação-de-testes)
 
-## Usage Instructions
+## Instruções de Uso
 
-### Schema Validation
-1. Navigate to the Validator page
-2. Select the schema version from the dropdown
-3. Enter or paste your JSON payload in the editor
-4. Click "Validate" to check your payload
-5. Review validation results on the right panel
+### Validação de Esquemas
+1. Navegue até a página do Validador
+2. Selecione a versão do esquema no dropdown (1.0.0 → 1.6.0-rc)
+3. Digite ou cole seu payload JSON no editor
+4. Clique em "Validate" para verificar seu payload
+5. Revise os resultados da validação no painel direito
 
-### Compatibility Checking
-1. Navigate to the Compatibility page
-2. Select source and target schema versions
-3. Enter your JSON payload
-4. Click "Check Compatibility"
-5. Review compatibility results and breaking changes
+### Verificação de Compatibilidade
+1. Navegue até a página de Compatibilidade
+2. Selecione as versões de origem e destino
+3. Digite seu payload JSON
+4. Clique em "Check Compatibility"
+5. Revise os resultados de compatibilidade e mudanças disruptivas
 
-### Certification
-1. Navigate to the Certification page
-2. Select the schema version
-3. Enter your JSON payload
-4. Click "Certify"
-5. Review certification score and detailed checks
+### Certificação OpenDelivery Ready
+1. Navegue até a página de Certificação
+2. Selecione a versão do esquema
+3. Digite seu payload JSON
+4. Clique em "Certify"
+5. Revise a pontuação de certificação e verificações detalhadas
 
-## Maintenance Procedures
+### Verificador de Autenticidade
+1. Navegue até a aba "Verificador de Autenticidade"
+2. Clique em "Executar Verificação de Autenticidade"
+3. Aguarde a verificação em todas as versões do esquema
+4. Revise os resultados para confirmar a autenticidade da API
 
-### Adding New Schema Versions
-1. Add schema file to `backend/src/schemas/`
-2. Update `SCHEMA_VERSIONS` constant in:
+### Payloads de Teste
+1. Clique no botão "Load Example" em qualquer página
+2. Selecione a categoria desejada:
+   - **Valid Payloads**: Exemplos válidos básicos e completos
+   - **Invalid Payloads**: Exemplos com erros comuns
+   - **Compatibility Payloads**: Para teste de migração entre versões
+3. Escolha o payload específico para carregá-lo no editor
+
+## Procedimentos de Manutenção
+
+### Adicionando Novas Versões de Esquema
+1. Adicione o arquivo de esquema em `backend/schemas/`
+2. Atualize a constante `SCHEMA_VERSIONS` em:
    - `frontend/src/pages/ValidatorPage.tsx`
    - `frontend/src/pages/CompatibilityPage.tsx`
    - `frontend/src/pages/CertificationPage.tsx`
-3. Update schema loading logic in `ValidationService`
+3. Atualize a lógica de carregamento de esquemas no `SchemaManager`
+4. Execute os testes para verificar a compatibilidade
 
-### Updating Validation Rules
-1. Modify schema files in `backend/src/schemas/`
-2. Update validation logic in `ValidationService` if needed
-3. Add tests for new validation rules
+### Atualizando Regras de Validação
+1. Modifique os arquivos de esquema em `backend/schemas/`
+2. Atualize a lógica de validação no `ValidationService` se necessário
+3. Atualize a lógica no `ValidationEngine` se necessário
+4. Adicione testes para as novas regras de validação
 
-### Updating Compatibility Rules
-1. Modify `CompatibilityService.analyzeChanges()`
-2. Update breaking changes detection logic
-3. Add tests for new compatibility rules
+### Atualizando Regras de Compatibilidade
+1. Modifique `CompatibilityService.checkCompatibility()`
+2. Atualize a lógica de detecção de mudanças disruptivas
+3. Adicione testes para as novas regras de compatibilidade
 
-### Updating Certification Checks
-1. Modify `CertificationService.runChecks()`
-2. Update scoring logic if needed
-3. Add tests for new certification checks
+### Atualizando Verificações de Certificação
+1. Modifique `CertificationService.certify()`
+2. Atualize a lógica de pontuação se necessário
+3. Adicione testes para as novas verificações de certificação
 
-## Troubleshooting
+### Atualizando Payloads de Teste
+1. Modifique `frontend/src/components/TestPayloads.tsx`
+2. Adicione novos payloads nas categorias apropriadas
+3. Execute os testes para verificar a integridade dos payloads
 
-### Common Issues
+## Solução de Problemas
 
-#### Validation Errors
-- Check JSON syntax
-- Verify schema version compatibility
-- Review required fields
-- Check data types
+### Problemas Comuns
 
-#### Compatibility Issues
-- Ensure source version is older than target
-- Check for breaking changes
-- Verify field deprecations
+#### Erros de Validação
+- Verifique a sintaxe JSON
+- Confirme a compatibilidade da versão do esquema
+- Revise campos obrigatórios
+- Verifique tipos de dados
 
-#### Certification Problems
-- Validate payload first
-- Check security requirements
-- Review best practices
+#### Problemas de Compatibilidade
+- Certifique-se de que a versão de origem é anterior à versão de destino
+- Verifique mudanças disruptivas
+- Confirme depreciações de campos
 
-### Error Messages
+#### Problemas de Certificação
+- Valide o payload primeiro
+- Verifique requisitos de segurança
+- Revise práticas recomendadas
 
-#### Backend Errors
-- 400: Invalid request format
-- 404: Schema version not found
-- 500: Internal server error
+#### Problemas de Conectividade
+- Verifique se o backend está rodando na porta 8000
+- Confirme se o frontend está rodando na porta 3000
+- Verifique configurações de CORS
 
-#### Frontend Errors
-- JSON parsing errors
-- Network connectivity issues
-- Version selection problems
+### Mensagens de Erro
 
-## API Documentation
+#### Erros do Backend
+- **400**: Formato de requisição inválido
+- **404**: Versão do esquema não encontrada
+- **500**: Erro interno do servidor
+
+#### Erros do Frontend
+- Erros de parsing JSON
+- Problemas de conectividade de rede
+- Problemas de seleção de versão
+
+## Documentação da API
 
 ### Endpoints
 
 #### POST /validate
 ```json
 {
-  "schema_version": "1.0.0",
-  "payload": {}
+  "schema_version": "1.6.0-rc",
+  "payload": {
+    // Seu payload JSON aqui
+  }
 }
 ```
 
 #### POST /compatibility
 ```json
 {
-  "source_version": "1.0.0",
-  "target_version": "1.1.0",
-  "payload": {}
+  "source_version": "1.5.0",
+  "target_version": "1.6.0-rc",
+  "payload": {
+    // Seu payload JSON aqui
+  }
 }
 ```
 
 #### POST /certify
 ```json
 {
-  "schema_version": "1.0.0",
-  "payload": {}
-}
-```
-
-### Response Formats
-
-#### Validation Response
-```json
-{
-  "status": "success|error",
-  "errors": [],
-  "details": {}
-}
-```
-
-#### Compatibility Response
-```json
-{
-  "status": "success|error",
-  "compatible": true,
-  "changes": [],
-  "details": {}
-}
-```
-
-#### Certification Response
-```json
-{
-  "status": "success|error",
-  "score": 85,
-  "checks": [],
-  "details": {
-    "certification_level": "GOLD|SILVER|BRONZE|NOT_CERTIFIED"
+  "schema_version": "1.6.0-rc",
+  "payload": {
+    // Seu payload JSON aqui
   }
 }
 ```
 
-## Testing Documentation
+#### GET /health
+Verifica a saúde do serviço.
 
-### Overview
-The OpenDelivery API Schema Validator includes a comprehensive test suite that verifies the core functionality of the validation system. The tests are written using Jest and cover three main components:
+### Formatos de Resposta
 
-1. Validator Tests (`validator.test.ts`)
-2. Validation Engine Tests (`validationEngine.test.ts`)
-3. Compatibility Checker Tests (`compatibilityChecker.test.ts`)
+#### Resposta de Validação
+```json
+{
+  "status": "success|error",
+  "message": "Mensagem descritiva",
+  "errors": [
+    {
+      "path": "/campo",
+      "message": "Descrição do erro",
+      "details": {}
+    }
+  ],
+  "details": {
+    "schema_version": "1.6.0-rc",
+    "validated_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
 
-### Running Tests
+#### Resposta de Compatibilidade
+```json
+{
+  "status": "success|error",
+  "compatible": true,
+  "changes": [
+    {
+      "type": "added|removed|modified",
+      "path": "/campo",
+      "description": "Descrição da mudança"
+    }
+  ],
+  "details": {
+    "source_version": "1.5.0",
+    "target_version": "1.6.0-rc",
+    "checked_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
 
+#### Resposta de Certificação
+```json
+{
+  "status": "success|error",
+  "score": 85,
+  "certification_level": "GOLD|SILVER|BRONZE|NOT_CERTIFIED",
+  "checks": [
+    {
+      "name": "Validação de Esquema",
+      "status": "success|warning|error",
+      "message": "Descrição do resultado",
+      "score": 100
+    }
+  ],
+  "details": {
+    "schema_version": "1.6.0-rc",
+    "certified_at": "2024-01-01T12:00:00Z"
+  }
+}
+```
+
+## Documentação de Testes
+
+### Visão Geral
+O OpenDelivery API Schema Validator 2 inclui uma suíte abrangente de testes que verifica a funcionalidade principal do sistema de validação. Os testes são escritos usando Jest (backend) e Vitest (frontend) e cobrem os principais componentes:
+
+### Testes do Backend
+1. **Validator Tests** (`validator.test.ts`)
+2. **Validation Engine Tests** (`validationEngine.test.ts`)
+3. **Compatibility Checker Tests** (`compatibilityChecker.test.ts`)
+
+### Testes do Frontend
+1. **TestPayloads Component Tests** (`TestPayloads.test.tsx`)
+2. **CompatibilityChecker Tests** (`CompatibilityChecker.test.tsx`)
+
+### Executando Testes
+
+#### Backend
 ```bash
-# Run all tests
+cd backend
 npm test
 
-# Run tests with coverage
+# Com cobertura
 npm test -- --coverage
 
-# Run specific test file
+# Arquivo específico
 npm test -- validator.test.ts
 ```
 
-### Test Coverage
+#### Frontend
+```bash
+cd frontend
+npm test
 
-The test suite covers the following key areas:
+# Com cobertura
+npm test -- --coverage
 
-#### 1. Validator Tests (`validator.test.ts`)
+# Arquivo específico
+npm test -- TestPayloads.test.tsx
+```
 
-These tests verify the high-level validation functionality:
+### Cobertura de Testes
 
-- **Schema Version Validation**
-  - ✓ Validates payloads against correct schema version
-  - ✓ Handles non-existent schema versions
-  - ✓ Validates against multiple schema versions
+#### Testes do Backend
+- **Validação de Esquema**: Validação contra esquemas OpenAPI
+- **Validação de Segurança**: Detecção de dados sensíveis
+- **Compatibilidade**: Verificação de mudanças disruptivas
+- **Tratamento de Erros**: Gestão adequada de erros
 
-- **Payload Validation**
-  - ✓ Validates correct payloads successfully
-  - ✓ Rejects invalid payloads with proper error messages
-  - ✓ Handles missing required fields
-  - ✓ Validates data types correctly
+#### Testes do Frontend
+- **Renderização de Componentes**: Verificação de renderização correta
+- **Interações do Usuário**: Eventos de clique e navegação
+- **Validação de Dados**: Verificação de payloads válidos e inválidos
+- **Integração**: Comunicação entre componentes
 
-- **Security Validation**
-  - ✓ Detects sensitive data in payloads
-  - ✓ Identifies potential security risks
-  - ✓ Validates secure communication requirements
+### Exemplos de Payloads de Teste
 
-Example test payload:
+#### Payload Válido Básico
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "orderTiming": "INSTANT",
+  "orderType": "DELIVERY",
+  "items": [
+    {
+      "id": "item1",
+      "name": "Produto Teste",
+      "quantity": 1,
+      "unitPrice": 15.90
+    }
+  ],
+  "total": {
+    "orderAmount": 15.90
+  },
+  "payments": [
+    {
+      "type": "CREDIT",
+      "value": 15.90
+    }
+  ],
+  "customer": {
+    "id": "customer1",
+    "name": "Cliente Teste"
+  }
+}
+```
+
+#### Payload Inválido (Campos Ausentes)
 ```json
 {
   "id": "123",
   "items": [
     {
-      "id": "item1",
-      "name": "Item 1",
-      "quantity": 1,
-      "price": 10.99
+      "name": "Produto Teste"
+      // Campos obrigatórios ausentes
     }
-  ],
-  "status": "PENDING"
+  ]
+  // Campos obrigatórios ausentes
 }
 ```
 
-#### 2. Validation Engine Tests (`validationEngine.test.ts`)
+### Níveis de Certificação
 
-These tests focus on the core validation logic:
+#### GOLD (90-100 pontos)
+- Validação completa do esquema
+- Segurança implementada
+- Práticas recomendadas seguidas
+- Documentação completa
 
-- **Schema Validation**
-  - ✓ Validates against OpenAPI schemas
-  - ✓ Handles schema references correctly
-  - ✓ Processes validation errors properly
+#### SILVER (70-89 pontos)
+- Validação do esquema com pequenos problemas
+- Segurança básica implementada
+- Algumas práticas recomendadas seguidas
 
-- **Security Requirements**
-  - ✓ Detects sensitive data patterns
-  - ✓ Identifies potential security vulnerabilities
-  - ✓ Validates secure communication patterns
+#### BRONZE (50-69 pontos)
+- Validação básica do esquema
+- Segurança mínima implementada
+- Práticas básicas seguidas
 
-- **Error Handling**
-  - ✓ Provides clear error messages
-  - ✓ Includes proper error paths
-  - ✓ Handles multiple errors correctly
+#### NOT_CERTIFIED (< 50 pontos)
+- Falha na validação básica
+- Problemas de segurança
+- Práticas inadequadas
 
-#### 3. Compatibility Checker Tests (`compatibilityChecker.test.ts`)
+## Versões Suportadas
 
-These tests verify version compatibility checking:
+### Esquemas OpenDelivery
+- **1.0.0**: Versão inicial
+- **1.0.1**: Correções e melhorias
+- **1.1.0**: Novas funcionalidades
+- **1.1.1**: Correções
+- **1.2.0**: Expansão da API
+- **1.2.1**: Correções
+- **1.3.0**: Melhorias de segurança
+- **1.4.0**: Novos endpoints
+- **1.5.0**: Otimizações
+- **1.6.0-rc**: Versão release candidate
+- **beta**: Versão beta com funcionalidades experimentais
 
-- **Schema Compatibility**
-  - ✓ Detects removed required fields
-  - ✓ Identifies property removals
-  - ✓ Checks enum value changes
+## Suporte Técnico
 
-- **Breaking Changes**
-  - ✓ Detects breaking changes between versions
-  - ✓ Identifies backward compatibility issues
-  - ✓ Reports detailed compatibility information
+Para suporte adicional:
+1. Consulte a [documentação da API](API.md)
+2. Revise os [testes do frontend](../FRONTEND-TESTS.md)
+3. Consulte o [resumo dos testes](../RESUMO-TESTES-FRONTEND.md)
+4. Verifique os logs do sistema
+5. Entre em contato através do [portfólio do desenvolvedor](https://fazmercado.com)
 
-Example compatibility test:
-```json
-{
-  "sourceSchema": {
-    "type": "object",
-    "properties": {
-      "status": {
-        "type": "string",
-        "enum": ["PENDING", "ACTIVE", "COMPLETED"]
-      }
-    }
-  },
-  "targetSchema": {
-    "type": "object",
-    "properties": {
-      "status": {
-        "type": "string",
-        "enum": ["PENDING", "COMPLETED"]
-      }
-    }
-  }
-}
-```
+## Referências
 
-### Writing New Tests
+- **OpenDelivery API**: [https://www.opendelivery.com.br/](https://www.opendelivery.com.br/)
+- **Documentação Oficial**: Consulte o site oficial para especificações completas
+- **GitHub**: [https://github.com/marcioreck/opendelivery-api-schema-validator2](https://github.com/marcioreck/opendelivery-api-schema-validator2)
 
-When adding new functionality, follow these guidelines for test creation:
+---
 
-1. **Test Structure**
-   - Group related tests using `describe` blocks
-   - Use clear test descriptions with `it` blocks
-   - Follow the Arrange-Act-Assert pattern
-
-2. **Test Coverage**
-   - Test both valid and invalid cases
-   - Include edge cases
-   - Test error conditions
-   - Verify security implications
-
-3. **Best Practices**
-   - Keep tests focused and atomic
-   - Use meaningful test data
-   - Avoid test interdependencies
-   - Clean up after tests
-
-Example test structure:
-```typescript
-describe('ValidationFeature', () => {
-  let validator: Validator;
-
-  beforeEach(() => {
-    validator = new Validator();
-  });
-
-  it('should handle valid case', async () => {
-    // Arrange
-    const input = { /* test data */ };
-
-    // Act
-    const result = await validator.validate(input);
-
-    // Assert
-    expect(result.isValid).toBe(true);
-  });
-
-  it('should handle error case', async () => {
-    // Arrange
-    const invalidInput = { /* invalid test data */ };
-
-    // Act
-    const result = await validator.validate(invalidInput);
-
-    // Assert
-    expect(result.isValid).toBe(false);
-    expect(result.errors).toHaveLength(1);
-  });
-});
-```
-
-### Troubleshooting Tests
-
-Common test issues and solutions:
-
-1. **Failed Schema Validation**
-   - Check schema version compatibility
-   - Verify payload structure
-   - Review required fields
-
-2. **Compatibility Test Failures**
-   - Compare schema versions carefully
-   - Check for breaking changes
-   - Review compatibility rules
-
-3. **Security Test Failures**
-   - Review sensitive data patterns
-   - Check security requirements
-   - Verify encryption requirements
-
-### Continuous Integration
-
-The test suite runs automatically in the CI pipeline:
-
-- On pull requests
-- On merges to main branch
-- On release tags
-
-Test results and coverage reports are available in the CI/CD dashboard. 
+*OpenDelivery API Schema Validator 2 - Guia de Suporte*  
+*Desenvolvido por Márcio Reck* 

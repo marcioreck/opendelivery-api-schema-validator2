@@ -1,7 +1,7 @@
 {
-  "name": "opendelivery-validator-backend",
+  "name": "opendelivery-api-schema-validator2-backend",
   "version": "1.0.0",
-  "description": "Backend service for OpenDelivery API Schema Validator",
+  "description": "Backend service for OpenDelivery API Schema Validator 2 - Validação, compatibilidade e certificação de implementações da API OpenDelivery",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
@@ -11,6 +11,24 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcioreck/opendelivery-api-schema-validator2.git"
+  },
+  "keywords": [
+    "opendelivery",
+    "api",
+    "validator",
+    "backend",
+    "schema",
+    "compatibility",
+    "certification"
+  ],
+  "author": {
+    "name": "Márcio Reck",
+    "url": "https://fazmercado.com"
+  },
+  "license": "MIT",
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^2.1.1",

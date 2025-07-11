@@ -12,16 +12,20 @@
 
 [x] No frontend, também crie uma forma de o usuário poder verificar que nosso validador segue todas as versões do padrão Open Delivery.
 
+[x] Atualize toda documentação considerando:
+- O nome da nossa ferramenta é: OpenDelivery API Schema Validator 2
+- Sincronize toda documentação com o que já realizamos até aqui e confira todas as informações consultando os códigos
+- No README.md, coloque citação e o link para a documentação do Open Delivery API em https://www.opendelivery.com.br/
+- Adicione referências ao autor Márcio Reck e seu portfólio em https://fazmercado.com
+- Crie o arquivo LICENSE.md para o projeto com licença MIT
+
+[x] Revise todo código para não ter dados ou schemas mokados ou fakes que servem apenas para testes e desenvolvimento. Precisamos respeitar todas as versões do padrão Open Delivery.
+
 Testando tudo localmente...
 
 Vamos publicar em uma página do GitHub para disponibilizar ao público e colher feedbacks.
 
-Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://marcioreck.github.io/opendelivery-api-schema-validator2/
-
 No frontend, coloque referência para o repositório no github e para o portifólio de Márcio Reck em https://fazmercado.com
 
-Lembrar este desenvolvedor de retirar os arquivos PROMPT* e README-Oportunity.md para fora do repositório, antes de torná-lo público no GitHub.
+Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/
 
-Escreva ou revise o README.md para ser atrativo para desenvolvedores que desejam usar o validador avançado do Open Delivery. Link no README.md todos os demais arquivos de suporte e documentação. Também referencie que foi criado por Márcio Reck, que tem seus projetos e portifólio em https://fazmercado.com
-
-Escreva o arquivo LICENSE.md para o projeto.

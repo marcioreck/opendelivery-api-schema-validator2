@@ -1,4 +1,8 @@
-# Resumo Executivo - Testes de Frontend
+# Resumo Executivo - Testes de Frontend - OpenDelivery API Schema Validator 2
+
+## Sobre o OpenDelivery
+
+O **OpenDelivery** é um padrão de API REST que estabelece um protocolo único de comunicação entre comerciantes e aplicações de pedidos no ecossistema de delivery. Para mais informações sobre o padrão oficial, visite: [https://www.opendelivery.com.br/](https://www.opendelivery.com.br/)
 
 ## Status Atual ✅
 
@@ -191,8 +195,17 @@ A implementação dos testes de frontend foi **bem-sucedida**, proporcionando:
 - ✅ **Interações de usuário** testadas e funcionais
 - ✅ **Base sólida** para expansão futura
 
-Os testes garantem que o validador de esquemas OpenDelivery funciona corretamente, detecta erros adequadamente e fornece uma experiência de usuário consistente e confiável.
+Os testes garantem que o **OpenDelivery API Schema Validator 2** funciona corretamente, detecta erros adequadamente e fornece uma experiência de usuário consistente e confiável.
+
+## Referências
+
+- **OpenDelivery API**: [https://www.opendelivery.com.br/](https://www.opendelivery.com.br/)
+- **Documentação dos Testes**: [FRONTEND-TESTS.md](FRONTEND-TESTS.md)
+- **Repositório**: [https://github.com/marcioreck/opendelivery-api-schema-validator2](https://github.com/marcioreck/opendelivery-api-schema-validator2)
 
 ---
 
-*Documento gerado automaticamente baseado na execução dos testes em {{ new Date().toLocaleString('pt-BR') }}* 
+**Desenvolvido por Márcio Reck**  
+**Portfólio**: [https://fazmercado.com](https://fazmercado.com)  
+**Projeto**: OpenDelivery API Schema Validator 2  
+*Documento gerado automaticamente baseado na execução dos testes* 

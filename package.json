@@ -1,7 +1,7 @@
 {
-  "name": "opendelivery-validator",
+  "name": "opendelivery-api-schema-validator2",
   "version": "1.0.0",
-  "description": "Enhanced OpenDelivery API Schema Validator with multi-version support and compatibility reporting",
+  "description": "OpenDelivery API Schema Validator 2 - Ferramenta avançada para validação, verificação de compatibilidade e certificação de implementações da API OpenDelivery",
   "main": "dist/index.js",
   "scripts": {
     "start": "ts-node src/index.ts",
@@ -11,6 +11,26 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcioreck/opendelivery-api-schema-validator2.git"
+  },
+  "keywords": [
+    "opendelivery",
+    "api",
+    "validator",
+    "schema",
+    "compatibility",
+    "certification",
+    "delivery",
+    "json",
+    "validation"
+  ],
+  "author": {
+    "name": "Márcio Reck",
+    "url": "https://fazmercado.com"
+  },
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "ajv": "^8.12.0",
@@ -35,5 +55,8 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 } 

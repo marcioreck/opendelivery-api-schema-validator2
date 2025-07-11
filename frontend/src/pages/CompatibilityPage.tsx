@@ -18,311 +18,366 @@ import {
   CircularProgress,
   Chip,
   Divider,
+  Grid,
 } from '@mui/material';
 import Editor from '@monaco-editor/react';
+import { checkCompatibility } from '../api';
+import TestPayloads from '../components/TestPayloads';
 
 const SCHEMA_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc'];
 
-const SAMPLE_PAYLOAD = {
-  "id": "12345",
+const INITIAL_PAYLOAD = {
+  "id": "123e4567-e89b-12d3-a456-426614174000",
   "type": "DELIVERY",
-  "displayId": "12345",
-  "createdAt": "2023-01-01T00:00:00Z",
+  "displayId": "ODV-123456",
+  "createdAt": "2024-01-20T10:30:00Z",
   "orderTiming": "INSTANT",
-  "preparationStartDateTime": "2023-01-01T00:00:00Z",
+  "preparationStartDateTime": "2024-01-20T10:30:00Z",
   "merchant": {
-    "id": "merchant-123",
-    "name": "Restaurante Teste"
+    "id": "merchant-abc123",
+    "name": "Restaurante Exemplo"
   },
   "items": [
     {
-      "id": "item-123",
-      "name": "Produto Teste",
-      "unit": "UN",
+      "id": "item-001",
+      "name": "Produto Exemplo",
       "quantity": 1,
+      "unit": "UN",
       "unitPrice": {
-        "value": 100.0,
+        "value": 25.90,
         "currency": "BRL"
       },
       "totalPrice": {
-        "value": 100.0,
+        "value": 25.90,
         "currency": "BRL"
       },
-      "externalCode": "item-123"
+      "externalCode": "PROD-001"
     }
   ],
   "total": {
     "itemsPrice": {
-      "value": 100.0,
-      "currency": "BRL"
-    },
-    "totalPrice": {
-      "value": 110.0,
+      "value": 25.90,
       "currency": "BRL"
     },
     "otherFees": {
-      "value": 0.0,
-      "currency": "BRL"
-    },
-    "orderAmount": {
-      "value": 110.0,
+      "value": 0.00,
       "currency": "BRL"
     },
     "discount": {
-      "value": 0.0,
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 25.90,
       "currency": "BRL"
     }
   },
   "payments": {
-    "prepaid": 110.0,
-    "pending": 0.0,
+    "prepaid": 0.00,
+    "pending": 25.90,
     "methods": [
       {
-        "value": 110.0,
+        "value": 25.90,
         "currency": "BRL",
         "type": "PENDING",
         "method": "CREDIT",
-        "methodInfo": "Credit Card"
+        "methodInfo": "Cartão de Crédito"
       }
     ]
   }
 };
 
-function CompatibilityPage() {
-  const [sourceVersion, setSourceVersion] = useState('1.5.0');
-  const [targetVersion, setTargetVersion] = useState('1.6.0-rc');
-  const [code, setCode] = useState(JSON.stringify(SAMPLE_PAYLOAD, null, 2));
-  const [compatibilityResult, setCompatibilityResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+export default function CompatibilityPage() {
+  const [sourceVersion, setSourceVersion] = useState<string>('1.5.0');
+  const [targetVersion, setTargetVersion] = useState<string>('1.6.0-rc');
+  const [payload, setPayload] = useState<string>(JSON.stringify(INITIAL_PAYLOAD, null, 2));
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
-  const handleCheck = async () => {
-    setLoading(true);
+  const handleCompatibilityCheck = async () => {
     try {
-      const response = await fetch('/api/compatibility', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          source_version: sourceVersion,
-          target_version: targetVersion,
-          payload: JSON.parse(code),
-        }),
-      });
-
-      const result = await response.json();
-      setCompatibilityResult(result);
-    } catch (error) {
-      setCompatibilityResult({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'An error occurred',
-      });
+      setLoading(true);
+      setError('');
+      
+      const parsedPayload = JSON.parse(payload);
+      const response = await checkCompatibility(sourceVersion, targetVersion, parsedPayload);
+      
+      setResult(response);
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        setError('Payload JSON inválido. Por favor, verifique a sintaxe.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro desconhecido ao verificar compatibilidade');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'default';
+  const handlePayloadSelect = (selectedPayload: any) => {
+    setPayload(JSON.stringify(selectedPayload, null, 2));
+  };
+
+  const isValidJson = (str: string): boolean => {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch {
+      return false;
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'error': return 'error';
-      case 'warning': return 'warning';
-      case 'info': return 'info';
-      case 'upgrade': return 'success';
-      case 'downgrade': return 'warning';
-      case 'version_change': return 'info';
-      default: return 'default';
-    }
+  const getCompatibilityStatusColor = (compatible: boolean) => {
+    return compatible ? 'success' : 'error';
+  };
+
+  const getCompatibilityStatusText = (compatible: boolean) => {
+    return compatible ? 'Compatível' : 'Incompatível';
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">Compatibility Checker</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Source Version</InputLabel>
-            <Select
-              value={sourceVersion}
-              label="Source Version"
-              onChange={(e) => setSourceVersion(e.target.value)}
-            >
-              {SCHEMA_VERSIONS.map((v) => (
-                <MenuItem key={v} value={v}>{v}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Target Version</InputLabel>
-            <Select
-              value={targetVersion}
-              label="Target Version"
-              onChange={(e) => setTargetVersion(e.target.value)}
-            >
-              {SCHEMA_VERSIONS.map((v) => (
-                <MenuItem key={v} value={v}>{v}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button variant="contained" onClick={handleCheck} disabled={loading}>
-            {loading ? <CircularProgress size={20} /> : 'Check Compatibility'}
-          </Button>
-        </Box>
-      </Box>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Verificador de Compatibilidade entre Versões
+      </Typography>
+      
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        Verifique se um payload é compatível entre diferentes versões do esquema OpenDelivery.
+      </Typography>
 
-      <Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box>
-                <Typography variant="h6">OpenDelivery JSON Payload</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Edit the JSON payload to test compatibility between schema versions
+      <Grid container spacing={3}>
+        {/* Configuração */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Configuração
+            </Typography>
+            
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Versão de Origem</InputLabel>
+              <Select
+                value={sourceVersion}
+                onChange={(e) => setSourceVersion(e.target.value)}
+                label="Versão de Origem"
+              >
+                {SCHEMA_VERSIONS.map((version) => (
+                  <MenuItem key={version} value={version}>
+                    {version}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Versão de Destino</InputLabel>
+              <Select
+                value={targetVersion}
+                onChange={(e) => setTargetVersion(e.target.value)}
+                label="Versão de Destino"
+              >
+                {SCHEMA_VERSIONS.map((version) => (
+                  <MenuItem key={version} value={version}>
+                    {version}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="contained"
+              onClick={handleCompatibilityCheck}
+              disabled={loading || !isValidJson(payload) || sourceVersion === targetVersion}
+              fullWidth
+              sx={{ mb: 2 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Verificar Compatibilidade'}
+            </Button>
+
+            {sourceVersion === targetVersion && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Selecione versões diferentes para comparar.
+              </Alert>
+            )}
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Exemplos de Payload:
+              </Typography>
+              <TestPayloads onSelectPayload={handlePayloadSelect} />
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Editor */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Payload para Teste
+            </Typography>
+            
+            <Box sx={{ height: 400, border: '1px solid #ddd', borderRadius: 1 }}>
+              <Editor
+                height="100%"
+                language="json"
+                value={payload}
+                onChange={(value) => setPayload(value || '')}
+                options={{
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                }}
+              />
+            </Box>
+            
+            {!isValidJson(payload) && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                JSON inválido. Por favor, corrija a sintaxe.
+              </Alert>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Erro */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Resultado */}
+      {result && (
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Resultado da Verificação
+          </Typography>
+          
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Status de Compatibilidade
+                </Typography>
+                <Chip 
+                  label={getCompatibilityStatusText(result.compatible)}
+                  color={getCompatibilityStatusColor(result.compatible)}
+                  size="large"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Versões Comparadas
+                </Typography>
+                <Typography variant="h6" sx={{ mt: 1 }}>
+                  {result.details?.source_version} → {result.details?.target_version}
                 </Typography>
               </Box>
-              <Button 
-                variant="outlined" 
-                size="small"
-                onClick={() => setCode(JSON.stringify(SAMPLE_PAYLOAD, null, 2))}
-              >
-                Load Example
-              </Button>
-            </Box>
-          </Box>
-          <Editor
-            height="100%"
-            defaultLanguage="json"
-            value={code}
-            onChange={(value) => setCode(value || '')}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              formatOnPaste: true,
-              formatOnType: true,
-            }}
-          />
-        </Paper>
+            </Grid>
+          </Grid>
 
-        <Paper sx={{ height: '100%', p: 2, overflow: 'auto' }}>
-          <Typography variant="h6" gutterBottom>
-            Compatibility Analysis
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            {sourceVersion} → {targetVersion}
-          </Typography>
-          
-          {loading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          )}
-          
-          {compatibilityResult?.status === 'success' && (
-            <>
-              <Box sx={{ mb: 2 }}>
-                <Alert severity={compatibilityResult.compatible ? 'success' : 'error'}>
-                  {compatibilityResult.compatible 
-                    ? 'The payload is compatible with the target version' 
-                    : 'The payload has compatibility issues with the target version'}
-                </Alert>
-              </Box>
-
-              {compatibilityResult.details && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Validation Summary
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                    <Chip 
-                      label={`Source (${sourceVersion}): ${compatibilityResult.details.source_validation.valid ? 'Valid' : 'Invalid'}`}
-                      color={compatibilityResult.details.source_validation.valid ? 'success' : 'error'}
-                      size="small"
-                    />
-                    <Chip 
-                      label={`Target (${targetVersion}): ${compatibilityResult.details.target_validation.valid ? 'Valid' : 'Invalid'}`}
-                      color={compatibilityResult.details.target_validation.valid ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </Box>
-                  <Divider sx={{ my: 2 }} />
-                </Box>
-              )}
-            </>
-          )}
-          
-          {compatibilityResult?.changes && compatibilityResult.changes.length > 0 && (
-            <>
-              <Typography variant="subtitle2" gutterBottom>
-                Compatibility Details
+          {result.changes && result.changes.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Alterações Identificadas
               </Typography>
               <TableContainer>
-                <Table size="small">
+                <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Path</TableCell>
-                      <TableCell>Description</TableCell>
+                      <TableCell>Tipo</TableCell>
+                      <TableCell>Caminho</TableCell>
+                      <TableCell>Descrição</TableCell>
+                      <TableCell>Severidade</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {compatibilityResult.changes.map((change: any, index: number) => (
+                    {result.changes.map((change: any, index: number) => (
                       <TableRow key={index}>
                         <TableCell>
                           <Chip 
                             label={change.type} 
-                            color={getTypeColor(change.type)}
-                            size="small"
+                            size="small" 
+                            color={change.type === 'error' ? 'error' : change.type === 'warning' ? 'warning' : 'default'}
                           />
                         </TableCell>
+                        <TableCell>{change.path}</TableCell>
+                        <TableCell>{change.description}</TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontFamily="monospace">
-                            {change.path}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {change.description}
-                          </Typography>
-                          {change.severity && (
-                            <Chip 
-                              label={change.severity} 
-                              color={getSeverityColor(change.severity)}
-                              size="small"
-                              sx={{ mt: 0.5 }}
-                            />
-                          )}
+                          <Chip 
+                            label={change.severity} 
+                            size="small"
+                            color={change.severity === 'high' ? 'error' : change.severity === 'medium' ? 'warning' : 'default'}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </TableContainer>
-            </>
+            </Box>
           )}
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="h6" gutterBottom>
+            Detalhes da Validação
+          </Typography>
           
-          {compatibilityResult?.status === 'error' && (
-            <Alert severity="error">
-              {compatibilityResult.message}
-            </Alert>
-          )}
-          
-          {!compatibilityResult && !loading && (
-            <Typography variant="body2" color="text.secondary">
-              Select source and target versions and click "Check Compatibility" to see the analysis.
-            </Typography>
-          )}
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" gutterBottom>
+                Validação na Versão de Origem ({result.details?.source_version})
+              </Typography>
+              <Alert 
+                severity={result.details?.source_validation?.valid ? 'success' : 'error'}
+                sx={{ mb: 1 }}
+              >
+                {result.details?.source_validation?.valid 
+                  ? 'Payload válido na versão de origem' 
+                  : 'Payload inválido na versão de origem'}
+              </Alert>
+              {result.details?.source_validation?.errors && (
+                <Box sx={{ mt: 1 }}>
+                  {result.details.source_validation.errors.map((error: any, index: number) => (
+                    <Alert key={index} severity="error" sx={{ mb: 1 }}>
+                      {error.path ? `${error.path}: ${error.message}` : error.message}
+                    </Alert>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" gutterBottom>
+                Validação na Versão de Destino ({result.details?.target_version})
+              </Typography>
+              <Alert 
+                severity={result.details?.target_validation?.valid ? 'success' : 'error'}
+                sx={{ mb: 1 }}
+              >
+                {result.details?.target_validation?.valid 
+                  ? 'Payload válido na versão de destino' 
+                  : 'Payload inválido na versão de destino'}
+              </Alert>
+              {result.details?.target_validation?.errors && (
+                <Box sx={{ mt: 1 }}>
+                  {result.details.target_validation.errors.map((error: any, index: number) => (
+                    <Alert key={index} severity="error" sx={{ mb: 1 }}>
+                      {error.path ? `${error.path}: ${error.message}` : error.message}
+                    </Alert>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+          </Grid>
         </Paper>
-      </Box>
+      )}
     </Box>
   );
-}
-
-export default CompatibilityPage; 
+} 

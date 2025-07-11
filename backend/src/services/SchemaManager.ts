@@ -13,59 +13,23 @@ export class SchemaManager {
   }
 
   public async loadSchemas(): Promise<void> {
-    // For testing purposes, use a hardcoded schema
-    const testSchema = {
-      openapi: '3.0.0',
-      info: {
-        title: 'Test API',
-        version: '1.0.0'
-      },
-      components: {
-        schemas: {
-          Order: {
-            type: 'object',
-            required: ['id', 'items', 'status'],
-            properties: {
-              id: {
-                type: 'string'
-              },
-              items: {
-                type: 'array',
-                items: {
-                  $ref: '#/components/schemas/OrderItem'
-                }
-              },
-              status: {
-                type: 'string',
-                enum: ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'DISPATCHED', 'DELIVERED', 'CONCLUDED', 'CANCELLED']
-              }
-            }
-          },
-          OrderItem: {
-            type: 'object',
-            required: ['id', 'name', 'quantity', 'price'],
-            properties: {
-              id: {
-                type: 'string'
-              },
-              name: {
-                type: 'string'
-              },
-              quantity: {
-                type: 'number',
-                minimum: 1
-              },
-              price: {
-                type: 'number',
-                minimum: 0
-              }
-            }
-          }
-        }
-      }
-    };
+    try {
+      const files = await fs.readdir(this.schemaDirectory);
+      const yamlFiles = files.filter(file => file.endsWith('.yaml'));
 
-    this.schemas.set('1.0.0' as ApiVersion, testSchema);
+      for (const file of yamlFiles) {
+        const filePath = join(this.schemaDirectory, file);
+        const content = await fs.readFile(filePath, 'utf8');
+        const schema = yaml.load(content) as object;
+        
+        // Extract version from filename (e.g., '1.0.0.yaml' -> '1.0.0')
+        const version = file.replace('.yaml', '') as ApiVersion;
+        this.schemas.set(version, schema);
+      }
+    } catch (error) {
+      console.error('Error loading schemas:', error);
+      throw new Error('Failed to load OpenDelivery schemas');
+    }
   }
 
   public async getSchema(version: ApiVersion): Promise<object | undefined> {
@@ -75,10 +39,14 @@ export class SchemaManager {
     return this.schemas.get(version);
   }
 
-  public async getAllVersions(): Promise<ApiVersion[]> {
+  public getAvailableVersions(): ApiVersion[] {
+    return Array.from(this.schemas.keys());
+  }
+
+  public async getAllSchemas(): Promise<Map<ApiVersion, object>> {
     if (this.schemas.size === 0) {
       await this.loadSchemas();
     }
-    return Array.from(this.schemas.keys());
+    return new Map(this.schemas);
   }
 } 

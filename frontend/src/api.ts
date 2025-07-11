@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { ValidationResult, CompatibilityReport, CertificationResult, ApiVersion } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,9 +10,12 @@ const api = axios.create({
   }
 });
 
-export const validatePayload = async (data: { schema_version: string; payload: unknown }): Promise<ValidationResult> => {
+export const validatePayload = async (payload: unknown, version: string): Promise<ValidationResult> => {
   try {
-    const response = await api.post('/api/validate', data);
+    const response = await api.post('/api/validate', {
+      version,
+      payload
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {
@@ -23,13 +26,15 @@ export const validatePayload = async (data: { schema_version: string; payload: u
 };
 
 export const checkCompatibility = async (
-  sourceVersion: ApiVersion,
-  targetVersion: ApiVersion
+  sourceVersion: string,
+  targetVersion: string,
+  payload: unknown
 ): Promise<CompatibilityReport> => {
   try {
     const response = await api.post('/api/compatibility', {
-      sourceVersion,
-      targetVersion
+      source_version: sourceVersion,
+      target_version: targetVersion,
+      payload
     });
     return response.data;
   } catch (error) {
@@ -40,9 +45,12 @@ export const checkCompatibility = async (
   }
 };
 
-export const certifyPayload = async (payload: unknown): Promise<CertificationResult> => {
+export const certifyPayload = async (payload: unknown, version: string): Promise<CertificationResult> => {
   try {
-    const response = await api.post('/api/certify', { payload });
+    const response = await api.post('/api/certify', { 
+      version,
+      payload 
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error) && error.response) {

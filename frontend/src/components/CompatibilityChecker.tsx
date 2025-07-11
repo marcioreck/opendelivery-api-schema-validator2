@@ -1,11 +1,27 @@
 import React, { useState } from 'react';
+import { 
+  Box, 
+  Button, 
+  Paper, 
+  Typography, 
+  LinearProgress, 
+  Alert, 
+  Accordion, 
+  AccordionSummary, 
+  AccordionDetails, 
+  Chip,
+  Grid,
+  Card,
+  CardContent
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { validatePayload } from '../api';
 
 interface CompatibilityResult {
   version: string;
-  status: 'success' | 'error' | 'pending';
-  message: string;
-  details?: string;
+  isValid: boolean;
+  details?: any;
+  errors?: any[];
 }
 
 interface TestProgress {
@@ -22,33 +38,67 @@ const CompatibilityChecker: React.FC = () => {
 
   const SCHEMA_VERSIONS = ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0-rc"];
   
-  // Payload de teste básico compatível com todas as versões
-  const testPayload = {
-    "order": {
-      "orderId": "12345",
-      "total": {
-        "itemsPrice": 100.0,
-        "deliveryFee": 10.0,
-        "benefits": 0.0,
-        "totalPrice": 110.0
+  // Payload básico compatível com padrão OpenDelivery
+  const getTestPayload = () => ({
+    id: "123e4567-e89b-12d3-a456-426614174000",
+    type: "DELIVERY",
+    displayId: "ODV-123456",
+    createdAt: "2024-01-20T10:30:00Z",
+    orderTiming: "INSTANT",
+    preparationStartDateTime: "2024-01-20T10:30:00Z",
+    merchant: {
+      id: "merchant-abc123",
+      name: "Restaurante Exemplo"
+    },
+    items: [
+      {
+        id: "item-001",
+        name: "Produto Exemplo",
+        quantity: 1,
+        unit: "UN",
+        unitPrice: {
+          value: 25.90,
+          currency: "BRL"
+        },
+        totalPrice: {
+          value: 25.90,
+          currency: "BRL"
+        },
+        externalCode: "PROD-001"
+      }
+    ],
+    total: {
+      itemsPrice: {
+        value: 25.90,
+        currency: "BRL"
       },
-      "preparationTimeSeconds": 1800,
-      "merchant": {
-        "merchantId": "merchant-123",
-        "name": "Restaurante Teste"
+      otherFees: {
+        value: 0.00,
+        currency: "BRL"
       },
-      "items": [
+      discount: {
+        value: 0.00,
+        currency: "BRL"
+      },
+      orderAmount: {
+        value: 25.90,
+        currency: "BRL"
+      }
+    },
+    payments: {
+      prepaid: 0.00,
+      pending: 25.90,
+      methods: [
         {
-          "name": "Produto Teste",
-          "quantity": 1,
-          "unit": "UN",
-          "unitPrice": 100.0,
-          "totalPrice": 100.0,
-          "externalId": "item-123"
+          value: 25.90,
+          currency: "BRL",
+          type: "PENDING",
+          method: "CREDIT",
+          methodInfo: "Cartão de Crédito"
         }
       ]
     }
-  };
+  });
 
   const toggleExpanded = (version: string) => {
     const newExpanded = new Set(expandedResults);
@@ -65,219 +115,193 @@ const CompatibilityChecker: React.FC = () => {
     setResults([]);
     setProgress({ current: 0, total: SCHEMA_VERSIONS.length, currentVersion: '' });
 
+    const testPayload = getTestPayload();
     const newResults: CompatibilityResult[] = [];
 
     for (let i = 0; i < SCHEMA_VERSIONS.length; i++) {
       const version = SCHEMA_VERSIONS[i];
-      setProgress({ current: i, total: SCHEMA_VERSIONS.length, currentVersion: version });
+      setProgress({ current: i + 1, total: SCHEMA_VERSIONS.length, currentVersion: version });
 
       try {
-        const result = await validatePayload(version, testPayload);
-        
-        if (result.status === 'success') {
-          newResults.push({
-            version,
-            status: 'success',
-            message: `✅ Validação bem-sucedida - API oficial do Open Delivery v${version} confirmada`,
-            details: result.message
-          });
-        } else {
-          newResults.push({
-            version,
-            status: 'error',
-            message: `❌ Falha na validação - Possível incompatibilidade com v${version}`,
-            details: result.message
-          });
-        }
+        const result = await validatePayload(testPayload, version);
+        newResults.push({
+          version,
+          isValid: result.valid,
+          details: result.details,
+          errors: result.errors
+        });
       } catch (error) {
         newResults.push({
           version,
-          status: 'error',
-          message: `❌ Erro de conexão - Não foi possível validar v${version}`,
-          details: error instanceof Error ? error.message : 'Erro desconhecido'
+          isValid: false,
+          details: null,
+          errors: [{ message: `Erro ao validar versão ${version}: ${error}` }]
         });
       }
 
-      setResults([...newResults]);
+      // Pequena pausa para mostrar o progresso
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
-    setProgress({ current: SCHEMA_VERSIONS.length, total: SCHEMA_VERSIONS.length, currentVersion: '' });
+    setResults(newResults);
     setIsRunning(false);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success': return 'text-green-600';
-      case 'error': return 'text-red-600';
-      default: return 'text-gray-600';
-    }
+  const getCompatibilityStatusColor = (isValid: boolean) => {
+    return isValid ? 'success' : 'error';
   };
 
-  const getStatusBg = (status: string) => {
-    switch (status) {
-      case 'success': return 'bg-green-50 border-green-200';
-      case 'error': return 'bg-red-50 border-red-200';
-      default: return 'bg-gray-50 border-gray-200';
-    }
+  const getCompatibilityStatusText = (isValid: boolean) => {
+    return isValid ? 'Compatível' : 'Incompatível';
   };
 
-  const successCount = results.filter(r => r.status === 'success').length;
-  const totalCount = results.length;
+  const compatibleVersions = results.filter(r => r.isValid).length;
+  const totalVersions = results.length;
+  const compatibilityPercentage = totalVersions > 0 ? Math.round((compatibleVersions / totalVersions) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Header explicativo */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-blue-900 mb-3">
-          🔍 Verificador de Autenticidade da API Open Delivery
-        </h2>
-        <div className="text-blue-800 space-y-2">
-          <p>
-            <strong>Propósito:</strong> Este teste valida que nosso validador está usando a API oficial do Open Delivery 
-            com autenticidade em todas as versões disponíveis do padrão.
-          </p>
-          <p>
-            <strong>Como funciona:</strong> Enviamos um payload de teste para cada versão do schema Open Delivery 
-            e verificamos se a validação é feita corretamente pela API oficial.
-          </p>
-          <p>
-            <strong>Garantia:</strong> Um resultado positivo confirma que você está usando um validador autêntico 
-            e atualizado com o padrão Open Delivery.
-          </p>
-        </div>
-      </div>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Verificador de Compatibilidade
+      </Typography>
+      
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        Teste a compatibilidade de um payload com todas as versões do esquema OpenDelivery disponíveis.
+      </Typography>
 
-      {/* Botão de execução */}
-      <div className="flex justify-center">
-        <button
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Button 
+          variant="contained" 
           onClick={runCompatibilityTest}
           disabled={isRunning}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2"
+          sx={{ mb: 2 }}
         >
-          {isRunning ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Verificando Autenticidade...
-            </>
-          ) : (
-            <>
-              🔍 Executar Verificação de Autenticidade
-            </>
-          )}
-        </button>
-      </div>
+          {isRunning ? 'Executando Teste...' : 'Executar Teste de Compatibilidade'}
+        </Button>
 
-      {/* Progresso */}
-      {isRunning && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
-              Verificando autenticidade da API...
-            </span>
-            <span className="text-sm text-gray-500">
-              {progress.current}/{progress.total}
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(progress.current / progress.total) * 100}%` }}
-            ></div>
-          </div>
-          {progress.currentVersion && (
-            <p className="text-xs text-gray-600 mt-1">
+        {isRunning && (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" gutterBottom>
               Testando versão: {progress.currentVersion}
-            </p>
-          )}
-        </div>
-      )}
+            </Typography>
+            <LinearProgress 
+              variant="determinate" 
+              value={(progress.current / progress.total) * 100}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Box>
+        )}
 
-      {/* Resumo dos resultados */}
+        {results.length > 0 && (
+          <Card sx={{ mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Resumo dos Resultados
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="textSecondary">
+                    Versões Compatíveis
+                  </Typography>
+                  <Typography variant="h4" color="success.main">
+                    {compatibleVersions}/{totalVersions}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="textSecondary">
+                    Taxa de Compatibilidade
+                  </Typography>
+                  <Typography variant="h4" color={compatibilityPercentage >= 70 ? 'success.main' : 'error.main'}>
+                    {compatibilityPercentage}%
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography variant="body2" color="textSecondary">
+                    Status Geral
+                  </Typography>
+                  <Chip 
+                    label={compatibilityPercentage >= 70 ? 'Boa Compatibilidade' : 'Baixa Compatibilidade'} 
+                    color={compatibilityPercentage >= 70 ? 'success' : 'error'}
+                    sx={{ mt: 1 }}
+                  />
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        )}
+      </Paper>
+
       {results.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">📊 Resumo da Verificação</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{totalCount}</div>
-              <div className="text-sm text-blue-800">Versões Testadas</div>
-            </div>
-            <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{successCount}</div>
-              <div className="text-sm text-green-800">APIs Autênticas</div>
-            </div>
-            <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{totalCount - successCount}</div>
-              <div className="text-sm text-red-800">Falhas/Incompatibilidades</div>
-            </div>
-          </div>
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Resultados Detalhados
+          </Typography>
           
-          {successCount === totalCount && totalCount > 0 && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
-              <p className="text-green-800 font-medium">
-                ✅ Validador 100% Autêntico! Todas as versões da API Open Delivery foram verificadas com sucesso.
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Resultados detalhados */}
-      {results.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="font-semibold text-gray-900">📋 Resultados Detalhados por Versão</h3>
-          {results.map((result) => (
-            <div 
+          {results.map((result, index) => (
+            <Accordion 
               key={result.version}
-              className={`border rounded-lg p-4 ${getStatusBg(result.status)}`}
+              expanded={expandedResults.has(result.version)}
+              onChange={() => toggleExpanded(result.version)}
+              sx={{ mb: 1 }}
             >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-gray-900">
-                      Open Delivery v{result.version}
-                    </span>
-                    <span className={`text-sm font-medium ${getStatusColor(result.status)}`}>
-                      {result.status === 'success' ? 'AUTÊNTICA' : 'FALHA'}
-                    </span>
-                  </div>
-                  <p className={`text-sm ${getStatusColor(result.status)}`}>
-                    {result.message}
-                  </p>
-                </div>
-                {result.details && (
-                  <button
-                    onClick={() => toggleExpanded(result.version)}
-                    className="text-gray-500 hover:text-gray-700 text-sm"
-                  >
-                    {expandedResults.has(result.version) ? '▼' : '▶'}
-                  </button>
-                )}
-              </div>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                  <Typography variant="h6">
+                    Versão {result.version}
+                  </Typography>
+                  <Chip 
+                    label={getCompatibilityStatusText(result.isValid)}
+                    color={getCompatibilityStatusColor(result.isValid)}
+                    size="small"
+                  />
+                </Box>
+              </AccordionSummary>
               
-              {result.details && expandedResults.has(result.version) && (
-                <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border">
-                  <h4 className="font-medium text-gray-900 mb-2">Detalhes da Validação:</h4>
-                  <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                    {result.details}
-                  </pre>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              <AccordionDetails>
+                {result.isValid ? (
+                  <Alert severity="success" sx={{ mb: 2 }}>
+                    O payload é compatível com a versão {result.version} do esquema OpenDelivery.
+                  </Alert>
+                ) : (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    O payload não é compatível com a versão {result.version} do esquema OpenDelivery.
+                  </Alert>
+                )}
 
-      {/* Informações adicionais */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h3 className="font-semibold text-gray-900 mb-2">ℹ️ Informações Técnicas</h3>
-        <ul className="text-sm text-gray-700 space-y-1">
-          <li>• <strong>Versões testadas:</strong> {SCHEMA_VERSIONS.join(', ')}</li>
-          <li>• <strong>Payload de teste:</strong> Pedido básico compatível com todas as versões</li>
-          <li>• <strong>Endpoint:</strong> API oficial do Open Delivery para validação de schemas</li>
-          <li>• <strong>Propósito:</strong> Garantir autenticidade e compatibilidade do validador</li>
-        </ul>
-      </div>
-    </div>
+                {result.errors && result.errors.length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Erros de Validação:
+                    </Typography>
+                    {result.errors.map((error, errorIndex) => (
+                      <Alert key={errorIndex} severity="error" sx={{ mb: 1 }}>
+                        {error.path ? `${error.path}: ${error.message}` : error.message}
+                      </Alert>
+                    ))}
+                  </Box>
+                )}
+
+                {result.details && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Detalhes da Validação:
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Versão do esquema: {result.details.schema_version}
+                    </Typography>
+                    {result.details.validated_at && (
+                      <Typography variant="body2" color="textSecondary">
+                        Validado em: {new Date(result.details.validated_at).toLocaleString()}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </Paper>
+      )}
+    </Box>
   );
 };
 

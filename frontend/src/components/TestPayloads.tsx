@@ -2,6 +2,7 @@ import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import { useState } from 'react';
 
 // Test payloads organized by category and validation type
+// Compatible with OpenDelivery API versions 1.5.0 and 1.6.0-rc
 const TEST_PAYLOADS = {
   valid: {
     basic: {
@@ -9,34 +10,34 @@ const TEST_PAYLOADS = {
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174000",
         type: "DELIVERY",
-        displayId: "123456",
+        displayId: "ODV-123456",
         createdAt: "2024-01-20T10:30:00Z",
         orderTiming: "INSTANT",
         preparationStartDateTime: "2024-01-20T10:30:00Z",
         merchant: {
-          id: "merchant123",
-          name: "Test Restaurant"
+          id: "merchant-abc123",
+          name: "Pizzaria Bella Vista"
         },
         items: [
           {
-            id: "item1",
-            name: "Hamburger",
+            id: "item-pizza-001",
+            name: "Pizza Margherita",
             quantity: 1,
             unit: "UN",
             unitPrice: {
-              value: 15.90,
+              value: 32.90,
               currency: "BRL"
             },
             totalPrice: {
-              value: 15.90,
+              value: 32.90,
               currency: "BRL"
             },
-            externalCode: "HAM001"
+            externalCode: "PIZZA-MARG-001"
           }
         ],
         total: {
           itemsPrice: {
-            value: 15.90,
+            value: 32.90,
             currency: "BRL"
           },
           otherFees: {
@@ -48,20 +49,20 @@ const TEST_PAYLOADS = {
             currency: "BRL"
           },
           orderAmount: {
-            value: 15.90,
+            value: 32.90,
             currency: "BRL"
           }
         },
         payments: {
           prepaid: 0.00,
-          pending: 15.90,
+          pending: 32.90,
           methods: [
             {
-              value: 15.90,
+              value: 32.90,
               currency: "BRL",
               type: "PENDING",
               method: "CREDIT",
-              methodInfo: "Credit Card"
+              methodInfo: "Cartão de Crédito"
             }
           ]
         }
@@ -72,53 +73,53 @@ const TEST_PAYLOADS = {
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174001",
         type: "DELIVERY",
-        displayId: "123457",
+        displayId: "ODV-123457",
         createdAt: "2024-01-20T10:35:00Z",
         orderTiming: "INSTANT",
         preparationStartDateTime: "2024-01-20T10:35:00Z",
         merchant: {
-          id: "merchant456",
-          name: "Complete Restaurant"
+          id: "merchant-def456",
+          name: "Hamburgueria do Centro"
         },
         items: [
           {
-            id: "item1",
-            name: "Burger Combo",
+            id: "item-combo-001",
+            name: "Combo Especial",
             quantity: 2,
             unit: "UN",
             unitPrice: {
-              value: 25.90,
+              value: 28.90,
               currency: "BRL"
             },
             totalPrice: {
-              value: 51.80,
+              value: 57.80,
               currency: "BRL"
             },
-            externalCode: "COMBO001"
+            externalCode: "COMBO-ESP-001"
           },
           {
-            id: "item2",
-            name: "Milkshake",
-            quantity: 1,
+            id: "item-bebida-001",
+            name: "Refrigerante Lata",
+            quantity: 2,
             unit: "UN",
             unitPrice: {
-              value: 12.90,
+              value: 4.50,
               currency: "BRL"
             },
             totalPrice: {
-              value: 12.90,
+              value: 9.00,
               currency: "BRL"
             },
-            externalCode: "MILK001"
+            externalCode: "REFRI-LATA-001"
           }
         ],
         total: {
           itemsPrice: {
-            value: 64.70,
+            value: 66.80,
             currency: "BRL"
           },
           otherFees: {
-            value: 0.00,
+            value: 8.00,
             currency: "BRL"
           },
           discount: {
@@ -126,31 +127,31 @@ const TEST_PAYLOADS = {
             currency: "BRL"
           },
           orderAmount: {
-            value: 64.70,
+            value: 74.80,
             currency: "BRL"
           }
         },
         payments: {
           prepaid: 0.00,
-          pending: 64.70,
+          pending: 74.80,
           methods: [
             {
-              value: 64.70,
+              value: 74.80,
               currency: "BRL",
               type: "PENDING",
               method: "CREDIT",
-              methodInfo: "Credit Card"
+              methodInfo: "Cartão de Crédito"
             }
           ]
         },
         customer: {
-          id: "cust456",
-          name: "Jane Smith",
+          id: "customer-ghi789",
+          name: "João Silva",
           phone: {
-            number: "11988888888"
+            number: "11987654321"
           },
-          documentNumber: "98765432100",
-          ordersCountOnMerchant: 3
+          documentNumber: "12345678901",
+          ordersCountOnMerchant: 5
         }
       }
     }
@@ -163,10 +164,10 @@ const TEST_PAYLOADS = {
         items: [
           {
             // Missing required fields: id, name, quantity, unitPrice
-            observations: "Invalid item"
+            observations: "Item sem campos obrigatórios"
           }
         ],
-        // Missing required fields: orderTiming, orderType, customer, total, payments
+        // Missing required fields: type, orderTiming, preparationStartDateTime, merchant, total, payments
         createdAt: "2024-01-20T10:40:00Z"
       }
     },
@@ -175,23 +176,23 @@ const TEST_PAYLOADS = {
       payload: {
         id: 123, // Should be string UUID
         type: "INVALID_TYPE", // Invalid enum value
-        displayId: "123456",
+        displayId: "ODV-123456",
         createdAt: "invalid-date", // Invalid date format
         orderTiming: "INVALID_TIMING", // Invalid enum value
         preparationStartDateTime: "2024-01-20T10:30:00Z",
         merchant: {
-          id: "merchant123",
+          id: "merchant-abc123",
           name: 123 // Should be string
         },
         items: [
           {
-            id: "item1",
+            id: "item-001",
             name: 123, // Should be string
             quantity: "1", // Should be number
             unit: 123, // Should be string
             unitPrice: "10.90", // Should be object
             totalPrice: "10.90", // Should be object
-            externalCode: "ITEM001"
+            externalCode: "ITEM-001"
           }
         ],
         total: {
@@ -209,16 +210,9 @@ const TEST_PAYLOADS = {
               currency: "BRL",
               type: "INVALID_TYPE", // Invalid enum value
               method: "INVALID_METHOD", // Invalid enum value
-              methodInfo: "Credit Card"
+              methodInfo: "Cartão de Crédito"
             }
           ]
-        },
-        customer: {
-          id: "cust789",
-          name: 123, // Should be string
-          phone: "123", // Should be object
-          documentNumber: 123, // Should be string
-          ordersCountOnMerchant: "1" // Should be number
         }
       }
     },
@@ -226,92 +220,35 @@ const TEST_PAYLOADS = {
       label: 'Invalid Values',
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174003",
-        type: "INVALID_TYPE", // Invalid enum value
-        displayId: "123456",
+        type: "DELIVERY",
+        displayId: "ODV-123456",
         createdAt: "2024-01-20T10:45:00Z",
-        orderTiming: "INVALID_TIMING", // Invalid enum value
+        orderTiming: "INSTANT",
         preparationStartDateTime: "2024-01-20T10:45:00Z",
         merchant: {
-          id: "merchant123",
-          name: "Test Restaurant"
+          id: "merchant-abc123",
+          name: "Lanchonete da Praça"
         },
         items: [
           {
-            id: "item1",
-            name: "Product",
-            quantity: "invalid", // Should be number
-            unit: "INVALID_UNIT", // Invalid enum value
+            id: "item-001",
+            name: "Lanche Simples",
+            quantity: 0, // Minimum is 1
+            unit: "UN",
             unitPrice: {
-              value: "invalid", // Should be number
-              currency: "INVALID" // Invalid currency format
-            },
-            totalPrice: {
-              value: "invalid", // Should be number
-              currency: "INVALID" // Invalid currency format
-            },
-            externalCode: "ITEM001"
-          }
-        ],
-        // Missing required total field
-        payments: {
-          prepaid: "invalid", // Should be number
-          pending: "invalid", // Should be number
-          methods: [
-            {
-              value: "invalid", // Should be number
-              currency: "INVALID", // Invalid currency format
-              type: "INVALID_TYPE", // Invalid enum value
-              method: "INVALID_METHOD", // Invalid enum value
-              methodInfo: "Credit Card"
-            }
-          ]
-        },
-        customer: {
-          id: "cust789",
-          name: "Test User",
-          phone: {
-            number: "123" // Invalid phone format
-          },
-          documentNumber: "123", // Invalid document number format
-          ordersCountOnMerchant: "invalid" // Should be number
-        }
-      }
-    }
-  },
-  compatibility: {
-    v1_0_to_1_1: {
-      label: 'v1.0.0 to v1.1.0 Changes',
-      payload: {
-        id: "123e4567-e89b-12d3-a456-426614174004",
-        type: "DELIVERY",
-        displayId: "123456",
-        createdAt: "2024-01-20T10:50:00Z",
-        orderTiming: "INSTANT",
-        preparationStartDateTime: "2024-01-20T10:50:00Z",
-        merchant: {
-          id: "merchant789",
-          name: "Compatibility Restaurant"
-        },
-        items: [
-          {
-            id: "item1",
-            name: "Product",
-            quantity: 1,
-            unit: "UNIT",
-            unitPrice: {
-              value: 10.00,
+              value: -10.00, // Minimum is 0
               currency: "BRL"
             },
             totalPrice: {
-              value: 10.00,
+              value: -10.00, // Minimum is 0
               currency: "BRL"
             },
-            externalCode: "COMPAT001"
+            externalCode: "LANCHE-001"
           }
         ],
         total: {
           itemsPrice: {
-            value: 10.00,
+            value: -10.00, // Minimum is 0
             currency: "BRL"
           },
           otherFees: {
@@ -323,31 +260,88 @@ const TEST_PAYLOADS = {
             currency: "BRL"
           },
           orderAmount: {
-            value: 10.00,
+            value: -10.00, // Minimum is 0
             currency: "BRL"
           }
         },
         payments: {
           prepaid: 0.00,
-          pending: 10.00,
+          pending: -10.00, // Minimum is 0
           methods: [
             {
-              value: 10.00,
+              value: -10.00, // Minimum is 0
               currency: "BRL",
               type: "PENDING",
               method: "CREDIT",
-              methodInfo: "Credit Card"
+              methodInfo: "Cartão de Crédito"
             }
           ]
+        }
+      }
+    }
+  },
+  compatibility: {
+    v1_5_to_1_6: {
+      label: 'v1.5.0 to v1.6.0 Changes',
+      payload: {
+        id: "123e4567-e89b-12d3-a456-426614174006",
+        type: "DELIVERY",
+        displayId: "ODV-123456",
+        createdAt: "2024-01-20T10:50:00Z",
+        orderTiming: "INSTANT",
+        preparationStartDateTime: "2024-01-20T10:50:00Z",
+        category: "FOOD", // New field in 1.6.0
+        merchant: {
+          id: "merchant-jkl012",
+          name: "Restaurante Bom Sabor"
         },
-        customer: {
-          id: "cust789",
-          name: "Test User",
-          phone: {
-            number: "11977777777"
+        items: [
+          {
+            id: "item-001",
+            name: "Prato Executivo",
+            quantity: 1,
+            unit: "UN",
+            unitPrice: {
+              value: 24.90,
+              currency: "BRL"
+            },
+            totalPrice: {
+              value: 24.90,
+              currency: "BRL"
+            },
+            externalCode: "PRATO-EXEC-001"
+          }
+        ],
+        total: {
+          itemsPrice: {
+            value: 24.90,
+            currency: "BRL"
           },
-          documentNumber: "12345678900",
-          ordersCountOnMerchant: 1
+          otherFees: {
+            value: 0.00,
+            currency: "BRL"
+          },
+          discount: {
+            value: 0.00,
+            currency: "BRL"
+          },
+          orderAmount: {
+            value: 24.90,
+            currency: "BRL"
+          }
+        },
+        payments: {
+          prepaid: 0.00,
+          pending: 24.90,
+          methods: [
+            {
+              value: 24.90,
+              currency: "BRL",
+              type: "PENDING",
+              method: "CREDIT",
+              methodInfo: "Cartão de Crédito"
+            }
+          ]
         }
       }
     }

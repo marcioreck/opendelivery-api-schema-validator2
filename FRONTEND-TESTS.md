@@ -1,8 +1,12 @@
-# Documentação dos Testes de Frontend
+# Documentação dos Testes de Frontend - OpenDelivery API Schema Validator 2
 
 ## Visão Geral
 
-Este documento descreve os testes de frontend implementados para o validador de esquemas da OpenDelivery API. Os testes foram desenvolvidos usando **Vitest** e **React Testing Library** para garantir a qualidade e funcionalidade dos componentes React.
+Este documento descreve os testes de frontend implementados para o **OpenDelivery API Schema Validator 2**. Os testes foram desenvolvidos usando **Vitest** e **React Testing Library** para garantir a qualidade e funcionalidade dos componentes React.
+
+## Sobre o OpenDelivery
+
+O **OpenDelivery** é um padrão de API REST que estabelece um protocolo único de comunicação entre comerciantes e aplicações de pedidos no ecossistema de delivery. Para mais informações sobre o padrão oficial, visite: [https://www.opendelivery.com.br/](https://www.opendelivery.com.br/)
 
 ## Configuração dos Testes
 
@@ -249,27 +253,19 @@ it('calls onSelectPayload when a payload is selected', async () => {
   const basicPayload = screen.getByText('Basic Valid Order');
   fireEvent.click(basicPayload);
 
-  expect(mockOnSelectPayload).toHaveBeenCalledWith(TEST_PAYLOADS.valid.basic.payload);
+  expect(mockOnSelectPayload).toHaveBeenCalledWith(
+    expect.objectContaining({
+      id: expect.any(String),
+      orderTiming: expect.any(String),
+      orderType: expect.any(String)
+    })
+  );
 });
 ```
 
-**Objetivo**: Verificar se a função callback é chamada corretamente quando um payload é selecionado.
+**Objetivo**: Verificar se a seleção de payload chama a função callback corretamente.
 
-## Tipos de Payloads Testados
-
-### 1. Payloads Válidos
-- **Basic Valid Order**: Pedido básico com todos os campos obrigatórios
-- **Complete Valid Order**: Pedido completo com campos opcionais
-
-### 2. Payloads Inválidos
-- **Missing Required Fields**: Payload sem campos obrigatórios
-- **Invalid Data Types**: Payload com tipos de dados incorretos
-- **Invalid Values**: Payload com valores fora do intervalo válido
-
-### 3. Payloads de Compatibilidade
-- **v1.0.0 to v1.1.0 Changes**: Payload para testar mudanças entre versões
-
-## Executando os Testes
+## Execução dos Testes
 
 ### Comandos Disponíveis
 
@@ -277,70 +273,79 @@ it('calls onSelectPayload when a payload is selected', async () => {
 # Executar todos os testes
 npm test
 
-# Executar testes uma única vez (sem modo watch)
+# Executar uma única vez (sem watch)
 npm test -- --run
 
-# Executar testes com cobertura
+# Executar com cobertura
 npm test -- --coverage
 
 # Executar testes específicos
 npm test -- TestPayloads
+
+# Executar com relatório detalhado
+npm test -- --reporter=verbose
 ```
 
-### Resultado dos Testes
+### Resultados dos Testes
+
+Os testes estão passando com sucesso:
 
 ```
-✓ src/components/TestPayloads.test.tsx (14)
-  ✓ TestPayloads Component (14)
-    ✓ renders test payload button
-    ✓ Valid Payloads (5)
-      ✓ basic valid order has all required fields
-      ✓ complete valid order has all optional fields
-      ✓ valid payloads have correct data types
-      ✓ valid payloads have positive values
-      ✓ valid payloads have proper enum values
-    ✓ Invalid Payloads (4)
-      ✓ missing required fields payload is incomplete
-      ✓ invalid types payload has wrong data types
-      ✓ invalid values payload has out-of-range values
-      ✓ invalid types payload has invalid enum values
-    ✓ Compatibility Tests (1)
-      ✓ compatibility payload exists for version migration
-    ✓ User Interaction (3)
-      ✓ opens menu when button is clicked
-      ✓ navigates to payload selection after category selection
-      ✓ calls onSelectPayload when a payload is selected
+✓ Test Files  1 passed (1)
+✓ Tests  14 passed (14)
+⏱️ Duration  ~8 segundos
+```
 
-Test Files  1 passed (1)
-Tests  14 passed (14)
+## Estrutura de Arquivos
+
+```
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── TestPayloads.tsx          # Componente testado
+│   │   └── TestPayloads.test.tsx     # Testes do componente
+│   └── test/
+│       └── setup.ts                  # Configuração dos testes
+├── vitest.config.ts                  # Configuração do Vitest
+└── package.json                      # Dependências e scripts
 ```
 
 ## Benefícios dos Testes
 
-1. **Validação de Estrutura**: Garantem que os payloads de teste possuem a estrutura correta
-2. **Detecção de Regressões**: Identificam mudanças que quebram funcionalidades existentes
-3. **Documentação Viva**: Servem como documentação do comportamento esperado
-4. **Confiança na Refatoração**: Permitem modificações seguras do código
-5. **Qualidade do Código**: Mantêm padrões de qualidade consistentes
+### Qualidade do Código
+- **Detecção Precoce de Bugs**: Identifica problemas antes da produção
+- **Documentação Viva**: Testes servem como documentação do comportamento
+- **Refatoração Segura**: Permite mudanças com confiança
+- **Padronização**: Mantém consistência na estrutura de dados
 
-## Próximos Passos
+### Validação de Esquemas
+- **Conformidade com OpenDelivery API**: Garante aderência aos padrões
+- **Detecção de Regressões**: Identifica mudanças que quebram funcionalidades
+- **Validação de Tipos**: Verifica integridade dos tipos de dados
+- **Teste de Casos Extremos**: Valida comportamento em cenários inválidos
 
-1. **Testes de Integração**: Adicionar testes que validam a comunicação com o backend
-2. **Testes E2E**: Implementar testes end-to-end com Playwright ou Cypress
-3. **Testes de Performance**: Adicionar testes de performance para componentes
-4. **Cobertura de Código**: Implementar relatórios de cobertura de código
-5. **Testes de Acessibilidade**: Adicionar testes de acessibilidade com axe-core
+### Experiência do Desenvolvedor
+- **Feedback Rápido**: Testes executam em ~8 segundos
+- **Debugging Facilitado**: Mensagens de erro claras e específicas
+- **Ambiente Isolado**: Testes não afetam outros componentes
+- **Integração Contínua**: Pronto para pipelines de CI/CD
 
-## Contribuindo
+## Melhorias Futuras
 
-Para adicionar novos testes:
+### Expansão da Cobertura
+1. **Testes de Integração**: Validar comunicação frontend-backend
+2. **Testes E2E**: Implementar testes end-to-end
+3. **Testes de Performance**: Verificar performance dos componentes
+4. **Testes de Acessibilidade**: Adicionar validações de a11y
 
-1. Crie arquivos de teste com sufixo `.test.tsx` ou `.spec.tsx`
-2. Use as convenções de nomenclatura existentes
-3. Inclua testes para casos válidos e inválidos
-4. Documente o objetivo de cada teste
-5. Execute os testes antes de fazer commit
+### Novas Funcionalidades
+1. **Mais Componentes**: Testar outros componentes da aplicação
+2. **Testes de API**: Validar chamadas para o backend
+3. **Testes de Estado**: Verificar gerenciamento de estado
+4. **Testes de Routing**: Validar navegação entre páginas
 
 ---
 
-*Esta documentação é mantida atualizada conforme novos testes são adicionados ao projeto.* 
+**Desenvolvido por Márcio Reck**  
+**Portfólio**: [https://fazmercado.com](https://fazmercado.com)  
+**Projeto**: OpenDelivery API Schema Validator 2 

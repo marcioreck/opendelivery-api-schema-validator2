@@ -7,9 +7,13 @@ import { errorHandler } from './utils/errorHandler';
 import validateRouter from './controllers/validateController';
 import { compatibilityRouter } from './controllers/compatibilityController';
 import { certifyRouter } from './controllers/certifyController';
+import { SchemaManager } from './services/SchemaManager';
 
 const app = express();
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3001;
+
+// Initialize schema manager
+const schemaManager = new SchemaManager();
 
 // Middleware
 app.use(helmet());
@@ -23,14 +27,31 @@ app.use('/api/compatibility', compatibilityRouter);
 app.use('/api/certify', certifyRouter);
 
 // Health check endpoint
-app.get('/health', (_, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', (_, res) => {
+  res.json({ 
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    service: 'OpenDelivery API Schema Validator 2'
+  });
 });
 
 // Error handling
 app.use(errorHandler);
 
-// Start server
-app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-}); 
+// Start server with schema loading
+async function startServer() {
+  try {
+    // Load OpenDelivery schemas
+    await schemaManager.loadSchemas();
+    logger.info('Schemas loaded successfully');
+    
+    app.listen(port, () => {
+      logger.info(`Server is running on port ${port}`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer(); 
