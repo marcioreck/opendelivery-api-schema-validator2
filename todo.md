@@ -38,5 +38,11 @@
 - Meta tags atualizadas no HTML
 - Título da página atualizado para "OpenDelivery API Schema Validator 2"
 
+[x] Payload de Teste Válido Adicionado:
+- Adicionado payload completo testado e validado para OpenDelivery v1.5.0
+- Inclui todos os campos obrigatórios: id, type, displayId, createdAt, orderTiming, preparationStartDateTime
+- Estrutura completa com merchant, items com preços em BRL, total detalhado e payments
+- Testado com sucesso contra o backend - status: "success"
+
 Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/
 

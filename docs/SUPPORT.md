@@ -269,35 +269,71 @@ npm test -- TestPayloads.test.tsx
 
 ### Exemplos de Payloads de Teste
 
-#### Payload Válido Básico
+#### Payload Válido para OpenDelivery v1.5.0
 ```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
+  "type": "DELIVERY",
+  "displayId": "ODV-2024001",
+  "createdAt": "2024-01-15T14:30:00Z",
   "orderTiming": "INSTANT",
-  "orderType": "DELIVERY",
+  "preparationStartDateTime": "2024-01-15T14:30:00Z",
+  "merchant": {
+    "id": "merchant-pizzaria-001",
+    "name": "Pizzaria Bella Vista"
+  },
   "items": [
     {
-      "id": "item1",
-      "name": "Produto Teste",
-      "quantity": 1,
-      "unitPrice": 15.90
+      "id": "item-pizza-margherita",
+      "name": "Pizza Margherita",
+      "quantity": 2,
+      "unit": "UN",
+      "unitPrice": {
+        "value": 35.90,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 71.80,
+        "currency": "BRL"
+      },
+      "externalCode": "PIZZA-MARG-35"
     }
   ],
   "total": {
-    "orderAmount": 15.90
-  },
-  "payments": [
-    {
-      "type": "CREDIT",
-      "value": 15.90
+    "itemsPrice": {
+      "value": 71.80,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 5.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 76.80,
+      "currency": "BRL"
     }
-  ],
-  "customer": {
-    "id": "customer1",
-    "name": "Cliente Teste"
+  },
+  "payments": {
+    "prepaid": 0.00,
+    "pending": 76.80,
+    "methods": [
+      {
+        "value": 76.80,
+        "currency": "BRL",
+        "type": "PENDING",
+        "method": "CREDIT",
+        "methodInfo": "Cartão de Crédito Visa"
+      }
+    ]
   }
 }
 ```
+
+> **✅ Testado e Validado**: Este payload foi testado e validado com sucesso contra o esquema OpenDelivery v1.5.0
 
 #### Payload Inválido (Campos Ausentes)
 ```json
