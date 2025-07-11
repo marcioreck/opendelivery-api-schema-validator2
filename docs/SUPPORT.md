@@ -391,9 +391,8 @@ npm test -- TestPayloads.test.tsx
 
 Para suporte adicional:
 1. Consulte a [documentação da API](API.md)
-2. Revise os [testes do frontend](../FRONTEND-TESTS.md)
-3. Verifique os logs do sistema
-4. Entre em contato através do [portfólio do desenvolvedor](https://fazmercado.com)
+2. Verifique os logs do sistema
+3. Entre em contato através do [portfólio do desenvolvedor](https://fazmercado.com)
 
 ## Referências
 

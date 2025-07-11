@@ -493,7 +493,6 @@ print(f'Certificação: {result["certification_level"]} - Pontuação: {result["
 
 ### Documentação Adicional
 - **[Guia de Suporte](SUPPORT.md)**: Instruções detalhadas de uso
-- **[Testes do Frontend](../FRONTEND-TESTS.md)**: Documentação dos testes
 - **[README](../README.md)**: Visão geral do projeto
 
 ### Links Importantes

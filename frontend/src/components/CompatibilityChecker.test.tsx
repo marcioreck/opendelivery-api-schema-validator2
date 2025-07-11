@@ -18,11 +18,9 @@ describe('CompatibilityChecker Component', () => {
   it('renders the compatibility checker interface', () => {
     render(<CompatibilityChecker />);
     
-    expect(screen.getByText(/Verificador de Autenticidade da API Open Delivery/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Propósito:/)[0]).toBeInTheDocument();
-    expect(screen.getByText(/Como funciona:/)).toBeInTheDocument();
-    expect(screen.getByText(/Garantia:/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i })).toBeInTheDocument();
+    expect(screen.getByText('Verificador de Compatibilidade')).toBeInTheDocument();
+    expect(screen.getByText(/Este verificador testa a compatibilidade/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i })).toBeInTheDocument();
   });
 
   it('shows progress when running compatibility test', async () => {
@@ -32,11 +30,11 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Verificando autenticidade da API/)).toBeInTheDocument();
+      expect(screen.getByText(/Executando Verificação/)).toBeInTheDocument();
     });
   });
 
@@ -48,11 +46,11 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Resumo da Verificação/)).toBeInTheDocument();
+      expect(screen.getByText(/Resumo dos Resultados/)).toBeInTheDocument();
     }, { timeout: 5000 });
   });
 
@@ -64,11 +62,11 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/API oficial do Open Delivery v1\.0\.0 confirmada/)).toBeInTheDocument();
+      expect(screen.getByText(/Versões Compatíveis/)).toBeInTheDocument();
     }, { timeout: 5000 });
   });
 
@@ -80,11 +78,11 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Falhas\/Incompatibilidades/)).toBeInTheDocument();
+      expect(screen.getByText(/Resultados Detalhados por Versão/)).toBeInTheDocument();
     }, { timeout: 5000 });
   });
 
@@ -96,12 +94,12 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByText(/Versões Testadas/)).toBeInTheDocument();
-      expect(screen.getByText(/APIs Autênticas/)).toBeInTheDocument();
+      expect(screen.getByText(/Taxa de Compatibilidade/)).toBeInTheDocument();
+      expect(screen.getByText(/Nível de Compatibilidade/)).toBeInTheDocument();
     }, { timeout: 5000 });
   });
 
@@ -113,7 +111,7 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     expect(button).not.toBeDisabled();
     
     fireEvent.click(button);
@@ -130,11 +128,11 @@ describe('CompatibilityChecker Component', () => {
 
     render(<CompatibilityChecker />);
     
-    const button = screen.getByRole('button', { name: /Executar Verificação de Autenticidade/i });
+    const button = screen.getByRole('button', { name: /Executar Verificação de Compatibilidade/i });
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Verificando Autenticidade/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /Executando Verificação/i })).toBeDisabled();
     });
   });
 }); 

@@ -178,7 +178,6 @@ Sistema de certificação com pontuação detalhada e níveis:
 
 - **[Guia de Suporte](docs/SUPPORT.md)** - Instruções de uso e manutenção
 - **[Documentação da API](docs/API.md)** - Referência completa da API
-- **[Testes do Frontend](FRONTEND-TESTS.md)** - Documentação dos testes do frontend
 
 ## Contribuindo
 
