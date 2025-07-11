@@ -12,44 +12,118 @@ export class ValidationEngine {
       validateFormats: true
     });
     addFormats(this.ajv);
+    
+    // Add UUID format support (case-insensitive)
+    this.ajv.addFormat('UUID', /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    this.ajv.addFormat('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    
+    // Add decimal format support for financial values
+    this.ajv.addFormat('decimal', /^-?\d+(\.\d+)?$/);
+    this.ajv.addFormat('DECIMAL', /^-?\d+(\.\d+)?$/);
   }
 
   public validateAgainstSchema(payload: unknown, schema: object): ValidationResult {
-    // Extract the actual schema and its dependencies from OpenAPI document
-    const { mainSchema, dependencies } = this.extractSchemas(schema);
+    try {
+      // For OpenAPI schemas, we need to compile the complete schema with all references
+      const compiledSchema = this.compileOpenAPISchema(schema);
+      const isValid = compiledSchema(payload);
 
-    // Add all dependencies to AJV
-    for (const [id, depSchema] of Object.entries(dependencies)) {
-      this.ajv.addSchema(depSchema, `#/components/schemas/${id}`);
-    }
-
-    const validate = this.ajv.compile(mainSchema);
-    const isValid = validate(payload);
-
-    return {
-      isValid,
-      errors: isValid ? undefined : this.processValidationErrors(validate.errors || []),
-      version: this.detectSchemaVersion(schema)
-    };
-  }
-
-  private extractSchemas(schema: any): { mainSchema: object; dependencies: Record<string, object> } {
-    // If this is an OpenAPI document
-    if (schema.openapi && schema.components?.schemas) {
-      const { Order, ...otherSchemas } = schema.components.schemas;
-      
-      // Return the main schema and its dependencies
       return {
-        mainSchema: Order || schema,
-        dependencies: otherSchemas
+        isValid,
+        errors: isValid ? undefined : this.processValidationErrors(compiledSchema.errors || []),
+        version: this.detectSchemaVersion(schema)
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [{
+          path: '',
+          message: `Schema compilation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          schemaPath: ''
+        }],
+        version: this.detectSchemaVersion(schema)
       };
     }
+  }
 
-    // If it's a regular schema
-    return {
-      mainSchema: schema,
-      dependencies: {}
-    };
+  private compileOpenAPISchema(schema: any): any {
+    // If this is an OpenAPI document, we need to handle it specially
+    if (schema.openapi && schema.components?.schemas) {
+      // For OpenAPI documents, we need to add all schemas first so references can be resolved
+      const schemas = schema.components.schemas;
+      
+      // Add each schema component to AJV's schema registry
+      for (const [schemaName, schemaDefinition] of Object.entries(schemas)) {
+        const schemaId = `#/components/schemas/${schemaName}`;
+        try {
+          // Remove existing schema if it exists
+          this.ajv.removeSchema(schemaId);
+        } catch (error) {
+          // Ignore if schema doesn't exist
+        }
+        
+        try {
+          this.ajv.addSchema(schemaDefinition as object, schemaId);
+        } catch (error) {
+          // Schema might have circular references, skip for now
+        }
+      }
+
+      // Now try to compile the Order schema
+      const orderSchema = schemas.Order;
+      if (!orderSchema) {
+        throw new Error('No Order schema found to validate against');
+      }
+
+      // Try to compile the Order schema directly
+      try {
+        return this.ajv.compile(orderSchema as object);
+      } catch (error) {
+        // If compilation fails, try to resolve references manually
+        const resolvedSchema = this.resolveReferences(orderSchema, schemas);
+        return this.ajv.compile(resolvedSchema);
+      }
+    }
+
+    // For regular JSON schemas, compile directly
+    return this.ajv.compile(schema);
+  }
+
+  private resolveReferences(schema: any, allSchemas: any): any {
+    if (typeof schema !== 'object' || schema === null) {
+      return schema;
+    }
+
+    if (Array.isArray(schema)) {
+      return schema.map(item => this.resolveReferences(item, allSchemas));
+    }
+
+    if (schema.$ref) {
+      const refPath = schema.$ref;
+      if (refPath.startsWith('#/components/schemas/')) {
+        const schemaPath = refPath.replace('#/components/schemas/', '');
+        const parts = schemaPath.split('/');
+        
+        let resolvedSchema = allSchemas[parts[0]];
+        for (let i = 1; i < parts.length; i++) {
+          if (resolvedSchema && resolvedSchema[parts[i]]) {
+            resolvedSchema = resolvedSchema[parts[i]];
+          } else {
+            // Can't resolve reference, return as is
+            return schema;
+          }
+        }
+        
+        return this.resolveReferences(resolvedSchema, allSchemas);
+      }
+    }
+
+    const resolved: any = {};
+    for (const [key, value] of Object.entries(schema)) {
+      resolved[key] = this.resolveReferences(value, allSchemas);
+    }
+    
+    return resolved;
   }
 
   public validateSecurityRequirements(payload: unknown): ValidationError[] {

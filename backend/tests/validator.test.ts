@@ -10,72 +10,78 @@ describe('Validator', () => {
   });
 
   describe('validate', () => {
-    const testSchema = {
-      openapi: '3.0.0',
-      info: {
-        title: 'Test API',
-        version: '1.0.0'
-      },
-      components: {
-        schemas: {
-          Order: {
-            type: 'object',
-            required: ['id', 'items', 'status'],
-            properties: {
-              id: {
-                type: 'string'
-              },
-              items: {
-                type: 'array',
-                items: {
-                  $ref: '#/components/schemas/OrderItem'
-                }
-              },
-              status: {
-                type: 'string',
-                enum: ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'DISPATCHED', 'DELIVERED', 'CONCLUDED', 'CANCELLED']
-              }
-            }
-          },
-          OrderItem: {
-            type: 'object',
-            required: ['id', 'name', 'quantity', 'price'],
-            properties: {
-              id: {
-                type: 'string'
-              },
-              name: {
-                type: 'string'
-              },
-              quantity: {
-                type: 'number',
-                minimum: 1
-              },
-              price: {
-                type: 'number',
-                minimum: 0
-              }
-            }
-          }
-        }
-      }
-    };
-
     it('should validate a correct payload', async () => {
       const payload = {
-        id: '123',
+        id: '12345678-1234-5678-9012-123456789012',
+        type: 'DELIVERY',
+        displayId: 'ORD-123',
+        createdAt: '2023-01-01T10:00:00Z',
+        orderTiming: 'INSTANT',
+        preparationStartDateTime: '2023-01-01T10:00:00Z',
+        merchant: {
+          id: '22815773000169-dbc7e35a-c936-4665-9e13-eb55eb8b6824',
+          name: 'Test Merchant'
+        },
         items: [
           {
-            id: 'item1',
-            name: 'Item 1',
+            id: '87654321-4321-5678-9012-210987654321',
+            name: 'Test Item',
+            unit: 'UNIT',
             quantity: 1,
-            price: 10.99
+            externalCode: 'TEST001',
+            unitPrice: {
+              value: 10.99,
+              currency: 'BRL'
+            },
+            totalPrice: {
+              value: 10.99,
+              currency: 'BRL'
+            }
           }
         ],
-        status: 'PENDING'
+        total: {
+          items: {
+            value: 10.99,
+            currency: 'BRL'
+          },
+          otherFees: {
+            value: 0,
+            currency: 'BRL'
+          },
+          discount: {
+            value: 0,
+            currency: 'BRL'
+          },
+          orderAmount: {
+            value: 10.99,
+            currency: 'BRL'
+          }
+        },
+        payments: {
+          prepaid: 10.99,
+          pending: 0,
+          methods: [
+            {
+              value: 10.99,
+              currency: 'BRL',
+              type: 'PREPAID',
+              method: 'CREDIT'
+            }
+          ]
+        },
+        customer: {
+          id: '11111111-1111-5678-9012-111111111111',
+          name: 'Test Customer',
+          phone: {
+            number: '+5511999999999'
+          },
+          documentNumber: '12345678901',
+          ordersCountOnMerchant: 1
+        }
       };
 
       const result = await validator.validate(payload, '1.0.0' as ApiVersion);
+      
       expect(result.isValid).toBe(true);
       expect(result.errors).toBeUndefined();
       expect(result.version).toBe('1.0.0');
@@ -84,6 +90,7 @@ describe('Validator', () => {
     it('should reject an invalid payload', async () => {
       const payload = {
         // Missing required fields
+        id: 'invalid-id'
       };
 
       const result = await validator.validate(payload, '1.0.0' as ApiVersion);
@@ -105,17 +112,73 @@ describe('Validator', () => {
 
     it('should detect sensitive data', async () => {
       const payload = {
-        id: '123',
+        id: '12345678-1234-5678-9012-123456789012',
+        type: 'DELIVERY',
+        displayId: 'ORD-123',
+        createdAt: '2023-01-01T10:00:00Z',
+        orderTiming: 'INSTANT',
+        preparationStartDateTime: '2023-01-01T10:00:00Z',
+        merchant: {
+          id: '22815773000169-dbc7e35a-c936-4665-9e13-eb55eb8b6824',
+          name: 'Test Merchant'
+        },
         items: [
           {
-            id: 'item1',
-            name: 'Item 1',
+            id: '87654321-4321-5678-9012-210987654321',
+            name: 'Test Item',
+            unit: 'UNIT',
             quantity: 1,
-            price: 10.99,
+            externalCode: 'TEST001',
+            unitPrice: {
+              value: 10.99,
+              currency: 'BRL'
+            },
+            totalPrice: {
+              value: 10.99,
+              currency: 'BRL'
+            },
             creditCard: '1234567890123456'
           }
         ],
-        status: 'PENDING',
+        total: {
+          items: {
+            value: 10.99,
+            currency: 'BRL'
+          },
+          otherFees: {
+            value: 0,
+            currency: 'BRL'
+          },
+          discount: {
+            value: 0,
+            currency: 'BRL'
+          },
+          orderAmount: {
+            value: 10.99,
+            currency: 'BRL'
+          }
+        },
+        payments: {
+          prepaid: 10.99,
+          pending: 0,
+          methods: [
+            {
+              value: 10.99,
+              currency: 'BRL',
+              type: 'PREPAID',
+              method: 'CREDIT'
+            }
+          ]
+        },
+        customer: {
+          id: '11111111-1111-5678-9012-111111111111',
+          name: 'Test Customer',
+          phone: {
+            number: '+5511999999999'
+          },
+          documentNumber: '12345678901',
+          ordersCountOnMerchant: 1
+        },
         password: 'secret123'
       };
 

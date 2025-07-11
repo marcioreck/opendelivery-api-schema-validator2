@@ -31,19 +31,6 @@
 -  Todas as versões OpenDelivery incluídas: 1.0.0, 1.0.1, 1.1.0, 1.1.1, 1.2.0, 1.2.1, 1.3.0, 1.4.0, 1.5.0, 1.6.0-rc, beta
 -  Payloads atualizados com dados realistas (Pizzaria Bella Vista, Pizza Margherita, etc.)
 
-[x] Referências Adicionadas no Frontend:
-- Footer com links para GitHub, portfólio e OpenDelivery API
-- Cabeçalho atualizado com nome completo do projeto
-- Seção informativa na página principal com links
-- Meta tags atualizadas no HTML
-- Título da página atualizado para "OpenDelivery API Schema Validator 2"
-
-[x] Payload de Teste Válido Adicionado:
-- Adicionado payload completo testado e validado para OpenDelivery v1.5.0
-- Inclui todos os campos obrigatórios: id, type, displayId, createdAt, orderTiming, preparationStartDateTime
-- Estrutura completa com merchant, items com preços em BRL, total detalhado e payments
-- Testado com sucesso contra o backend - status: "success"
-
 [x] Limpeza e Atualização da Documentação:
 - Removido arquivo FRONTEND-TESTS.md e suas referências
 - Removido arquivo RESUMO-TESTES-FRONTEND.md e suas referências
@@ -55,13 +42,7 @@
   * Corrigidos comandos de teste (Vitest)
   * Adicionadas seções de troubleshooting específicas
 
-[x] Revisão e Correção dos Testes Frontend:
-- Corrigidos TestPayloads.test.tsx para usar estrutura atual do código
-- Corrigidos CompatibilityChecker.test.tsx para usar textos corretos
-- Atualizados testes para refletir botão "Select Test Payload" vs "Load Example"
-- Corrigidas importações e estrutura de TEST_PAYLOADS
-- Testes validam organização por versão (v1_0_compatible, v1_2_plus, invalid)
-- ✅ **21 testes passando** - Sistema 100% testado e funcional
+Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
 
-Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/
+
 
