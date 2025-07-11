@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { Box, Card, CardContent, Button, Typography, Alert, CircularProgress } from '@mui/material';
+import { Box, Card, CardContent, Button, Typography, Alert, CircularProgress, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import Editor from '@monaco-editor/react';
 import { ValidationResult } from '../types';
 import { validatePayload } from '../api';
 
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
+
 const Validator = () => {
   const [payload, setPayload] = useState('');
+  const [version, setVersion] = useState('1.5.0');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +27,7 @@ const Validator = () => {
         return;
       }
 
-      const validationResult = await validatePayload(parsedPayload);
+      const validationResult = await validatePayload(parsedPayload, version);
       setResult(validationResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -39,14 +42,28 @@ const Validator = () => {
         OpenDelivery Validator
       </Typography>
       <Typography variant="body1" gutterBottom>
-        Validate your OpenDelivery API payload against the latest schema version.
+        Validate your OpenDelivery API payload against the specified schema version.
       </Typography>
 
       <Card sx={{ mt: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            JSON Payload
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">
+              JSON Payload
+            </Typography>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Version</InputLabel>
+              <Select
+                value={version}
+                label="Version"
+                onChange={(e) => setVersion(e.target.value)}
+              >
+                {SCHEMA_VERSIONS.map((v) => (
+                  <MenuItem key={v} value={v}>{v}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
           <Editor
             height="400px"
             defaultLanguage="json"
@@ -83,28 +100,9 @@ const Validator = () => {
             <Typography variant="h6" gutterBottom>
               Validation Result
             </Typography>
-            <Alert severity={result.isValid ? 'success' : 'error'}>
-              {result.isValid
-                ? 'Payload is valid!'
-                : 'Payload validation failed. See errors below.'}
-            </Alert>
-            {result.errors && result.errors.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Validation Errors:
-                </Typography>
-                {result.errors.map((error, index) => (
-                  <Alert severity="error" key={index} sx={{ mt: 1 }}>
-                    <Typography variant="body2">
-                      <strong>Path:</strong> {error.path}
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Message:</strong> {error.message}
-                    </Typography>
-                  </Alert>
-                ))}
-              </Box>
-            )}
+            <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              {JSON.stringify(result, null, 2)}
+            </pre>
           </CardContent>
         </Card>
       )}

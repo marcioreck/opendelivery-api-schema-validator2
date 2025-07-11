@@ -14,6 +14,8 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -21,34 +23,37 @@ import {
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import Editor from '@monaco-editor/react';
+import { certifyPayload } from '../api';
 
-const SCHEMA_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc'];
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
 
 function CertificationPage() {
-  const [version, setVersion] = useState(SCHEMA_VERSIONS[SCHEMA_VERSIONS.length - 1]);
+  const [version, setVersion] = useState(SCHEMA_VERSIONS[SCHEMA_VERSIONS.length - 2]); // Use 1.5.0 as default
   const [code, setCode] = useState('{\n  // Enter your OpenDelivery JSON here\n}');
   const [certificationResult, setCertificationResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleCertify = async () => {
     try {
-      const response = await fetch('/api/certify', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          schema_version: version,
-          payload: JSON.parse(code),
-        }),
-      });
+      setLoading(true);
+      setError('');
+      setCertificationResult(null);
 
-      const result = await response.json();
+      let parsedPayload;
+      try {
+        parsedPayload = JSON.parse(code);
+      } catch (parseError) {
+        setError('Invalid JSON format. Please check your input.');
+        return;
+      }
+
+      const result = await certifyPayload(parsedPayload, version);
       setCertificationResult(result);
-    } catch (error) {
-      setCertificationResult({
-        status: 'error',
-        message: error instanceof Error ? error.message : 'An error occurred',
-      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,30 +77,45 @@ function CertificationPage() {
   };
 
   return (
-    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5">OpenDelivery Ready Certification</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Version</InputLabel>
-            <Select
-              value={version}
-              label="Version"
-              onChange={(e) => setVersion(e.target.value)}
-            >
-              {SCHEMA_VERSIONS.map((v) => (
-                <MenuItem key={v} value={v}>{v}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button variant="contained" onClick={handleCertify}>
-            Certify
-          </Button>
-        </Box>
-      </Box>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Schema Certification
+      </Typography>
+      
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        Certify your OpenDelivery payload against comprehensive quality checks including schema validation, 
+        business rules, security requirements, and best practices.
+      </Typography>
 
-      <Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <Paper sx={{ height: '100%' }}>
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">
+            OpenDelivery Payload
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Version</InputLabel>
+              <Select
+                value={version}
+                label="Version"
+                onChange={(e) => setVersion(e.target.value)}
+              >
+                {SCHEMA_VERSIONS.map((v) => (
+                  <MenuItem key={v} value={v}>{v}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              onClick={handleCertify}
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Certify'}
+            </Button>
+          </Box>
+        </Box>
+
+        <Box sx={{ height: 400, border: '1px solid #ddd', borderRadius: 1 }}>
           <Editor
             height="100%"
             defaultLanguage="json"
@@ -103,53 +123,90 @@ function CertificationPage() {
             onChange={(value) => setCode(value || '')}
             options={{
               minimap: { enabled: false },
+              scrollBeyondLastLine: false,
               fontSize: 14,
+              wordWrap: 'on',
             }}
           />
-        </Paper>
+        </Box>
+      </Paper>
 
-        <Paper sx={{ height: '100%', p: 2, overflow: 'auto' }}>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      {certificationResult && (
+        <Paper sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
             Certification Results
           </Typography>
-          {certificationResult?.score !== undefined && (
-            <Box sx={{ mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                <Typography variant="body1">Overall Score:</Typography>
-                <Chip
-                  label={`${certificationResult.score}%`}
-                  color={getScoreColor(certificationResult.score)}
-                />
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={certificationResult.score}
-                color={getScoreColor(certificationResult.score)}
-              />
+
+          {/* Overall Score */}
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            <Typography variant="h4" color={getScoreColor(certificationResult.score)}>
+              {certificationResult.score}/100
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              Certification Score
+            </Typography>
+            <Chip 
+              label={certificationResult.details?.certification_level || 'Unknown'}
+              color={getScoreColor(certificationResult.score)}
+              sx={{ mt: 1 }}
+            />
+          </Box>
+
+          {/* Detailed Checks */}
+          {certificationResult.checks && certificationResult.checks.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Detailed Checks
+              </Typography>
+              <List>
+                {certificationResult.checks.map((check: any, index: number) => (
+                  <ListItem key={index}>
+                    <ListItemIcon>
+                      {getStatusIcon(check.status)}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={check.name}
+                      secondary={
+                        <Box>
+                          <Typography variant="body2" color="textSecondary">
+                            {check.message}
+                          </Typography>
+                          <Typography variant="body2" color="textSecondary">
+                            Score: {check.score}/100
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
             </Box>
           )}
-          {certificationResult?.checks && (
-            <List>
-              {certificationResult.checks.map((check: any, index: number) => (
-                <ListItem key={index}>
-                  <ListItemIcon>
-                    {getStatusIcon(check.status)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={check.name}
-                    secondary={check.message}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
-          {certificationResult?.status === 'error' && (
-            <Typography color="error">
-              {certificationResult.message}
-            </Typography>
+
+          {/* Certification Details */}
+          {certificationResult.details && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Certification Details:
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Schema Version: {certificationResult.details.schema_version}
+              </Typography>
+              {certificationResult.details.certified_at && (
+                <Typography variant="body2" color="textSecondary">
+                  Certified At: {new Date(certificationResult.details.certified_at).toLocaleString()}
+                </Typography>
+              )}
+            </Box>
           )}
         </Paper>
-      </Box>
+      )}
     </Box>
   );
 }

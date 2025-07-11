@@ -24,8 +24,9 @@ import Editor from '@monaco-editor/react';
 import { checkCompatibility } from '../api';
 import TestPayloads from '../components/TestPayloads';
 
-const SCHEMA_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc'];
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
 
+// Payload básico que é compatível com v1.5.0+
 const INITIAL_PAYLOAD = {
   "id": "123e4567-e89b-12d3-a456-426614174000",
   "type": "DELIVERY",
@@ -35,28 +36,28 @@ const INITIAL_PAYLOAD = {
   "preparationStartDateTime": "2024-01-20T10:30:00Z",
   "merchant": {
     "id": "merchant-abc123",
-    "name": "Restaurante Exemplo"
+    "name": "Pizzaria Bella Vista"
   },
   "items": [
     {
-      "id": "item-001",
-      "name": "Produto Exemplo",
+      "id": "item-pizza-001",
+      "name": "Pizza Margherita",
       "quantity": 1,
       "unit": "UN",
       "unitPrice": {
-        "value": 25.90,
+        "value": 32.90,
         "currency": "BRL"
       },
       "totalPrice": {
-        "value": 25.90,
+        "value": 32.90,
         "currency": "BRL"
       },
-      "externalCode": "PROD-001"
+      "externalCode": "PIZZA-MARG-001"
     }
   ],
   "total": {
     "itemsPrice": {
-      "value": 25.90,
+      "value": 32.90,
       "currency": "BRL"
     },
     "otherFees": {
@@ -68,16 +69,16 @@ const INITIAL_PAYLOAD = {
       "currency": "BRL"
     },
     "orderAmount": {
-      "value": 25.90,
+      "value": 32.90,
       "currency": "BRL"
     }
   },
   "payments": {
     "prepaid": 0.00,
-    "pending": 25.90,
+    "pending": 32.90,
     "methods": [
       {
-        "value": 25.90,
+        "value": 32.90,
         "currency": "BRL",
         "type": "PENDING",
         "method": "CREDIT",
@@ -88,8 +89,8 @@ const INITIAL_PAYLOAD = {
 };
 
 export default function CompatibilityPage() {
-  const [sourceVersion, setSourceVersion] = useState<string>('1.5.0');
-  const [targetVersion, setTargetVersion] = useState<string>('1.6.0-rc');
+  const [sourceVersion, setSourceVersion] = useState<string>('1.0.0');
+  const [targetVersion, setTargetVersion] = useState<string>('1.5.0');
   const [payload, setPayload] = useState<string>(JSON.stringify(INITIAL_PAYLOAD, null, 2));
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -136,6 +137,40 @@ export default function CompatibilityPage() {
     return compatible ? 'Compatível' : 'Incompatível';
   };
 
+  const getCompatibilityLevelText = (level: string) => {
+    switch (level) {
+      case 'fully_compatible':
+        return 'Totalmente Compatível';
+      case 'upgraded_compatibility':
+        return 'Compatibilidade Melhorada';
+      case 'partially_compatible':
+        return 'Parcialmente Compatível';
+      case 'regression':
+        return 'Regressão';
+      case 'same_issues':
+        return 'Mesmos Problemas';
+      default:
+        return 'Incompatível';
+    }
+  };
+
+  const getCompatibilityLevelColor = (level: string) => {
+    switch (level) {
+      case 'fully_compatible':
+        return 'success';
+      case 'upgraded_compatibility':
+        return 'info';
+      case 'partially_compatible':
+        return 'warning';
+      case 'regression':
+        return 'error';
+      case 'same_issues':
+        return 'warning';
+      default:
+        return 'error';
+    }
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom>
@@ -144,6 +179,7 @@ export default function CompatibilityPage() {
       
       <Typography variant="body1" sx={{ mb: 3 }}>
         Verifique se um payload é compatível entre diferentes versões do esquema OpenDelivery.
+        Você pode comparar versões diferentes ou usar versões iguais para validar um payload específico.
       </Typography>
 
       <Grid container spacing={3}>
@@ -187,7 +223,7 @@ export default function CompatibilityPage() {
             <Button
               variant="contained"
               onClick={handleCompatibilityCheck}
-              disabled={loading || !isValidJson(payload) || sourceVersion === targetVersion}
+              disabled={loading || !isValidJson(payload)}
               fullWidth
               sx={{ mb: 2 }}
             >
@@ -196,7 +232,7 @@ export default function CompatibilityPage() {
 
             {sourceVersion === targetVersion && (
               <Alert severity="info" sx={{ mb: 2 }}>
-                Selecione versões diferentes para comparar.
+                Verificando compatibilidade na mesma versão ({sourceVersion}). Isso validará se o payload é válido para esta versão específica.
               </Alert>
             )}
 
@@ -256,7 +292,7 @@ export default function CompatibilityPage() {
           </Typography>
           
           <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
                 <Typography variant="body2" color="textSecondary">
                   Status de Compatibilidade
@@ -269,7 +305,20 @@ export default function CompatibilityPage() {
                 />
               </Box>
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Nível de Compatibilidade
+                </Typography>
+                <Chip 
+                  label={getCompatibilityLevelText(result.compatibility_level)}
+                  color={getCompatibilityLevelColor(result.compatibility_level)}
+                  size="large"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
               <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
                 <Typography variant="body2" color="textSecondary">
                   Versões Comparadas
@@ -280,6 +329,19 @@ export default function CompatibilityPage() {
               </Box>
             </Grid>
           </Grid>
+
+          {result.recommendations && result.recommendations.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Recomendações
+              </Typography>
+              {result.recommendations.map((recommendation: string, index: number) => (
+                <Alert key={index} severity="info" sx={{ mb: 1 }}>
+                  {recommendation}
+                </Alert>
+              ))}
+            </Box>
+          )}
 
           {result.changes && result.changes.length > 0 && (
             <Box sx={{ mb: 2 }}>
@@ -303,7 +365,7 @@ export default function CompatibilityPage() {
                           <Chip 
                             label={change.type} 
                             size="small" 
-                            color={change.type === 'error' ? 'error' : change.type === 'warning' ? 'warning' : 'default'}
+                            color={change.type === 'new_error' ? 'error' : change.type === 'fixed_error' ? 'success' : 'default'}
                           />
                         </TableCell>
                         <TableCell>{change.path}</TableCell>
@@ -342,7 +404,7 @@ export default function CompatibilityPage() {
                   ? 'Payload válido na versão de origem' 
                   : 'Payload inválido na versão de origem'}
               </Alert>
-              {result.details?.source_validation?.errors && (
+              {result.details?.source_validation?.errors && result.details.source_validation.errors.length > 0 && (
                 <Box sx={{ mt: 1 }}>
                   {result.details.source_validation.errors.map((error: any, index: number) => (
                     <Alert key={index} severity="error" sx={{ mb: 1 }}>
@@ -365,7 +427,7 @@ export default function CompatibilityPage() {
                   ? 'Payload válido na versão de destino' 
                   : 'Payload inválido na versão de destino'}
               </Alert>
-              {result.details?.target_validation?.errors && (
+              {result.details?.target_validation?.errors && result.details.target_validation.errors.length > 0 && (
                 <Box sx={{ mt: 1 }}>
                   {result.details.target_validation.errors.map((error: any, index: number) => (
                     <Alert key={index} severity="error" sx={{ mb: 1 }}>

@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { ValidationResult, CompatibilityReport, CertificationResult, ApiVersion } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Use relative URLs to leverage Vite's proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,7 +14,7 @@ const api = axios.create({
 export const validatePayload = async (payload: unknown, version: string): Promise<ValidationResult> => {
   try {
     const response = await api.post('/api/validate', {
-      version,
+      schema_version: version,
       payload
     });
     return response.data;
@@ -32,8 +33,8 @@ export const checkCompatibility = async (
 ): Promise<CompatibilityReport> => {
   try {
     const response = await api.post('/api/compatibility', {
-      source_version: sourceVersion,
-      target_version: targetVersion,
+      from_version: sourceVersion,
+      to_version: targetVersion,
       payload
     });
     return response.data;
@@ -48,7 +49,7 @@ export const checkCompatibility = async (
 export const certifyPayload = async (payload: unknown, version: string): Promise<CertificationResult> => {
   try {
     const response = await api.post('/api/certify', { 
-      version,
+      schema_version: version,
       payload 
     });
     return response.data;

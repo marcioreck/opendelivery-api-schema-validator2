@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Box, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Button, Tabs, Tab } from '@mui/material';
+import { Box, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Button, Tabs, Tab, Alert, Link } from '@mui/material';
 import Editor from '@monaco-editor/react';
 import TestPayloads from '../components/TestPayloads';
 import CompatibilityChecker from '../components/CompatibilityChecker';
 import { validatePayload } from '../api';
 
-const SCHEMA_VERSIONS = ['1.0.0', '1.1.0', '1.2.0', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc'];
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
 
 function ValidatorPage() {
   const [version, setVersion] = useState('1.5.0');
@@ -27,10 +27,8 @@ function ValidatorPage() {
         return;
       }
 
-      const result = await validatePayload({
-        schema_version: version,
-        payload: parsedPayload
-      });
+      // Chamada correta da API: validatePayload(payload, version)
+      const result = await validatePayload(parsedPayload, version);
       
       setValidationResult(result);
     } catch (error) {
@@ -52,10 +50,28 @@ function ValidatorPage() {
 
   return (
     <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          <strong>OpenDelivery API Schema Validator 2</strong> - Ferramenta para validação, compatibilidade e certificação de implementações da API OpenDelivery. 
+          Desenvolvido por{' '}
+          <Link href="https://fazmercado.com" target="_blank" rel="noopener noreferrer" color="primary">
+            Márcio Reck
+          </Link>
+          {' '} | {' '}
+          <Link href="https://github.com/marcioreck/opendelivery-api-schema-validator2" target="_blank" rel="noopener noreferrer" color="primary">
+            GitHub
+          </Link>
+          {' '} | {' '}
+          <Link href="https://www.opendelivery.com.br/" target="_blank" rel="noopener noreferrer" color="primary">
+            OpenDelivery API
+          </Link>
+        </Typography>
+      </Alert>
+      
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab label="Schema Validator" />
-          <Tab label="Verificador de Autenticidade" />
+          <Tab label="Verificador de Compatibilidade" />
         </Tabs>
       </Box>
 

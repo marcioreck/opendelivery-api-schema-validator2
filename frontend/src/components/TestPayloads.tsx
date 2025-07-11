@@ -1,12 +1,174 @@
 import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
 import { useState } from 'react';
 
-// Test payloads organized by category and validation type
-// Compatible with OpenDelivery API versions 1.5.0 and 1.6.0-rc
+// Test payloads organized by OpenDelivery version compatibility
 const TEST_PAYLOADS = {
-  valid: {
+  // Payloads for OpenDelivery v1.0.0/1.0.1/1.1.0/1.1.1 (older versions)
+  v1_0_compatible: {
     basic: {
-      label: 'Basic Valid Order',
+      label: 'Basic Order (v1.0.0 Compatible)',
+      payload: {
+        id: "123e4567-e89b-12d3-a456-426614174000",
+        type: "DELIVERY",
+        displayId: "ODV-123456",
+        createdAt: "2024-01-20T10:30:00Z",
+        orderTiming: "INSTANT",
+        preparationStartDateTime: "2024-01-20T10:30:00Z",
+        merchant: {
+          id: "merchant-abc123",
+          name: "Pizzaria Bella Vista"
+        },
+        customer: {
+          id: "customer-123",
+          name: "João Silva",
+          phone: {
+            number: "11987654321"
+          },
+          documentNumber: "12345678901",
+          ordersCountOnMerchant: 1
+        },
+        items: [
+          {
+            id: "item-pizza-001",
+            name: "Pizza Margherita",
+            quantity: 1,
+            unit: "UNIT",
+            unitPrice: {
+              value: 32.90,
+              currency: "BRL"
+            },
+            totalPrice: {
+              value: 32.90,
+              currency: "BRL"
+            },
+            externalCode: "PIZZA-MARG-001"
+          }
+        ],
+        total: {
+          items: {
+            value: 32.90,
+            currency: "BRL"
+          },
+          otherFees: {
+            value: 0.00,
+            currency: "BRL"
+          },
+          discount: {
+            value: 0.00,
+            currency: "BRL"
+          },
+          orderAmount: {
+            value: 32.90,
+            currency: "BRL"
+          }
+        },
+        payments: {
+          prepaid: 0.00,
+          pending: 32.90,
+          methods: [
+            {
+              value: 32.90,
+              currency: "BRL",
+              type: "PENDING",
+              method: "CREDIT",
+              methodInfo: "Cartão de Crédito"
+            }
+          ]
+        }
+      }
+    },
+    complete: {
+      label: 'Complete Order (v1.0.0 Compatible)',
+      payload: {
+        id: "123e4567-e89b-12d3-a456-426614174001",
+        type: "DELIVERY",
+        displayId: "ODV-123457",
+        createdAt: "2024-01-20T10:35:00Z",
+        orderTiming: "INSTANT",
+        preparationStartDateTime: "2024-01-20T10:35:00Z",
+        merchant: {
+          id: "merchant-def456",
+          name: "Hamburgueria do Centro"
+        },
+        customer: {
+          id: "customer-456",
+          name: "Maria Santos",
+          phone: {
+            number: "11987654322"
+          },
+          documentNumber: "12345678902",
+          ordersCountOnMerchant: 3
+        },
+        items: [
+          {
+            id: "item-combo-001",
+            name: "Combo Especial",
+            quantity: 2,
+            unit: "UNIT",
+            unitPrice: {
+              value: 28.90,
+              currency: "BRL"
+            },
+            totalPrice: {
+              value: 57.80,
+              currency: "BRL"
+            },
+            externalCode: "COMBO-ESP-001"
+          },
+          {
+            id: "item-bebida-001",
+            name: "Refrigerante Lata",
+            quantity: 2,
+            unit: "UNIT",
+            unitPrice: {
+              value: 4.50,
+              currency: "BRL"
+            },
+            totalPrice: {
+              value: 9.00,
+              currency: "BRL"
+            },
+            externalCode: "REFRI-LATA-001"
+          }
+        ],
+        total: {
+          items: {
+            value: 66.80,
+            currency: "BRL"
+          },
+          otherFees: {
+            value: 8.00,
+            currency: "BRL"
+          },
+          discount: {
+            value: 0.00,
+            currency: "BRL"
+          },
+          orderAmount: {
+            value: 74.80,
+            currency: "BRL"
+          }
+        },
+        payments: {
+          prepaid: 0.00,
+          pending: 74.80,
+          methods: [
+            {
+              value: 74.80,
+              currency: "BRL",
+              type: "PENDING",
+              method: "CREDIT",
+              methodInfo: "Cartão de Crédito"
+            }
+          ]
+        }
+      }
+    }
+  },
+  // Payloads for OpenDelivery v1.2.0+ (modern versions)
+  v1_2_plus: {
+    basic: {
+      label: 'Basic Order (v1.2.0+ Compatible)',
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174000",
         type: "DELIVERY",
@@ -69,7 +231,7 @@ const TEST_PAYLOADS = {
       }
     },
     complete: {
-      label: 'Complete Valid Order',
+      label: 'Complete Order (v1.2.0+ Compatible)',
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174001",
         type: "DELIVERY",
@@ -156,6 +318,7 @@ const TEST_PAYLOADS = {
       }
     }
   },
+  // Invalid payloads for testing error handling
   invalid: {
     missingRequired: {
       label: 'Missing Required Fields',
@@ -204,117 +367,43 @@ const TEST_PAYLOADS = {
         payments: {
           prepaid: "0.00", // Should be number
           pending: "15.90", // Should be number
-          methods: [
-            {
-              value: "15.90", // Should be number
-              currency: "BRL",
-              type: "INVALID_TYPE", // Invalid enum value
-              method: "INVALID_METHOD", // Invalid enum value
-              methodInfo: "Cartão de Crédito"
-            }
-          ]
+          methods: "invalid" // Should be array
         }
       }
     },
-    invalidValues: {
-      label: 'Invalid Values',
+    invalidEnum: {
+      label: 'Invalid Enum Values',
       payload: {
         id: "123e4567-e89b-12d3-a456-426614174003",
-        type: "DELIVERY",
+        type: "INVALID_SERVICE_TYPE", // Invalid enum
         displayId: "ODV-123456",
-        createdAt: "2024-01-20T10:45:00Z",
-        orderTiming: "INSTANT",
-        preparationStartDateTime: "2024-01-20T10:45:00Z",
+        createdAt: "2024-01-20T10:30:00Z",
+        orderTiming: "INVALID_TIMING", // Invalid enum
+        preparationStartDateTime: "2024-01-20T10:30:00Z",
         merchant: {
           id: "merchant-abc123",
-          name: "Lanchonete da Praça"
+          name: "Pizzaria Bella Vista"
         },
         items: [
           {
-            id: "item-001",
-            name: "Lanche Simples",
-            quantity: 0, // Minimum is 1
-            unit: "UN",
-            unitPrice: {
-              value: -10.00, // Minimum is 0
-              currency: "BRL"
-            },
-            totalPrice: {
-              value: -10.00, // Minimum is 0
-              currency: "BRL"
-            },
-            externalCode: "LANCHE-001"
-          }
-        ],
-        total: {
-          itemsPrice: {
-            value: -10.00, // Minimum is 0
-            currency: "BRL"
-          },
-          otherFees: {
-            value: 0.00,
-            currency: "BRL"
-          },
-          discount: {
-            value: 0.00,
-            currency: "BRL"
-          },
-          orderAmount: {
-            value: -10.00, // Minimum is 0
-            currency: "BRL"
-          }
-        },
-        payments: {
-          prepaid: 0.00,
-          pending: -10.00, // Minimum is 0
-          methods: [
-            {
-              value: -10.00, // Minimum is 0
-              currency: "BRL",
-              type: "PENDING",
-              method: "CREDIT",
-              methodInfo: "Cartão de Crédito"
-            }
-          ]
-        }
-      }
-    }
-  },
-  compatibility: {
-    v1_5_to_1_6: {
-      label: 'v1.5.0 to v1.6.0 Changes',
-      payload: {
-        id: "123e4567-e89b-12d3-a456-426614174006",
-        type: "DELIVERY",
-        displayId: "ODV-123456",
-        createdAt: "2024-01-20T10:50:00Z",
-        orderTiming: "INSTANT",
-        preparationStartDateTime: "2024-01-20T10:50:00Z",
-        category: "FOOD", // New field in 1.6.0
-        merchant: {
-          id: "merchant-jkl012",
-          name: "Restaurante Bom Sabor"
-        },
-        items: [
-          {
-            id: "item-001",
-            name: "Prato Executivo",
+            id: "item-pizza-001",
+            name: "Pizza Margherita",
             quantity: 1,
-            unit: "UN",
+            unit: "INVALID_UNIT", // Invalid enum
             unitPrice: {
-              value: 24.90,
-              currency: "BRL"
+              value: 32.90,
+              currency: "INVALID_CURRENCY" // Invalid enum
             },
             totalPrice: {
-              value: 24.90,
+              value: 32.90,
               currency: "BRL"
             },
-            externalCode: "PRATO-EXEC-001"
+            externalCode: "PIZZA-MARG-001"
           }
         ],
         total: {
           itemsPrice: {
-            value: 24.90,
+            value: 32.90,
             currency: "BRL"
           },
           otherFees: {
@@ -326,19 +415,19 @@ const TEST_PAYLOADS = {
             currency: "BRL"
           },
           orderAmount: {
-            value: 24.90,
+            value: 32.90,
             currency: "BRL"
           }
         },
         payments: {
           prepaid: 0.00,
-          pending: 24.90,
+          pending: 32.90,
           methods: [
             {
-              value: 24.90,
+              value: 32.90,
               currency: "BRL",
-              type: "PENDING",
-              method: "CREDIT",
+              type: "INVALID_PAYMENT_TYPE", // Invalid enum
+              method: "INVALID_METHOD", // Invalid enum
               methodInfo: "Cartão de Crédito"
             }
           ]
@@ -354,20 +443,19 @@ interface TestPayloadsProps {
 
 export default function TestPayloads({ onSelectPayload }: TestPayloadsProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [category, setCategory] = useState<string>('');
-  
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
-    setCategory('');
   };
 
   const handleClose = () => {
     setAnchorEl(null);
-    setCategory('');
+    setSelectedCategory('');
   };
 
-  const handleCategorySelect = (cat: string) => {
-    setCategory(cat);
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
   };
 
   const handlePayloadSelect = (payload: any) => {
@@ -375,51 +463,74 @@ export default function TestPayloads({ onSelectPayload }: TestPayloadsProps) {
     handleClose();
   };
 
+  const getCategoryLabel = (category: string) => {
+    switch (category) {
+      case 'v1_0_compatible':
+        return 'OpenDelivery v1.0.0 Compatible';
+      case 'v1_2_plus':
+        return 'OpenDelivery v1.2.0+ Compatible';
+      case 'invalid':
+        return 'Invalid Payloads (for testing)';
+      default:
+        return category;
+    }
+  };
+
+  const open = Boolean(anchorEl);
+
   return (
     <Box>
       <Button
         variant="outlined"
         onClick={handleClick}
-        size="small"
+        sx={{ mb: 2 }}
       >
-        Load Example
+        Select Test Payload
       </Button>
       <Menu
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={open}
         onClose={handleClose}
+        PaperProps={{
+          style: {
+            maxHeight: 400,
+            width: '300px',
+          },
+        }}
       >
-        {!category ? (
-          Object.entries(TEST_PAYLOADS).map(([cat, _]) => (
+        {!selectedCategory ? (
+          // Show categories
+          Object.keys(TEST_PAYLOADS).map((category) => (
             <MenuItem
-              key={cat}
-              onClick={() => handleCategorySelect(cat)}
-              sx={{ textTransform: 'capitalize' }}
+              key={category}
+              onClick={() => handleCategorySelect(category)}
             >
-              <Typography>{cat} Payloads</Typography>
+              <Typography variant="body2">
+                {getCategoryLabel(category)}
+              </Typography>
             </MenuItem>
           ))
         ) : (
-          Object.entries(TEST_PAYLOADS[category as keyof typeof TEST_PAYLOADS]).map(([_, { label, payload }]) => (
-            <MenuItem
-              key={label}
-              onClick={() => handlePayloadSelect(payload)}
-            >
-              <Typography>{label}</Typography>
+          // Show payloads for selected category
+          <>
+            <MenuItem onClick={() => setSelectedCategory('')}>
+              <Typography variant="body2" color="primary">
+                ← Back to Categories
+              </Typography>
             </MenuItem>
-          ))
-        )}
-        {category && (
-          <MenuItem
-            onClick={() => setCategory('')}
-            sx={{ borderTop: '1px solid #eee' }}
-          >
-            <Typography>← Back</Typography>
-          </MenuItem>
+            {Object.entries(TEST_PAYLOADS[selectedCategory as keyof typeof TEST_PAYLOADS]).map(([key, payload]) => (
+              <MenuItem
+                key={key}
+                onClick={() => handlePayloadSelect(payload.payload)}
+              >
+                <Typography variant="body2">
+                  {payload.label}
+                </Typography>
+              </MenuItem>
+            ))}
+          </>
         )}
       </Menu>
     </Box>
   );
-}
-
-export { TEST_PAYLOADS }; 
+} 

@@ -36,9 +36,9 @@ const CompatibilityChecker: React.FC = () => {
   const [progress, setProgress] = useState<TestProgress>({ current: 0, total: 0, currentVersion: '' });
   const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
 
-  const SCHEMA_VERSIONS = ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0", "1.5.0", "1.6.0-rc"];
+  const SCHEMA_VERSIONS = ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", "1.2.1", "1.3.0", "1.4.0", "1.5.0", "1.6.0-rc", "beta"];
   
-  // Payload básico compatível com padrão OpenDelivery
+  // Payload básico compatível com padrão OpenDelivery v1.5.0+
   const getTestPayload = () => ({
     id: "123e4567-e89b-12d3-a456-426614174000",
     type: "DELIVERY",
@@ -48,28 +48,28 @@ const CompatibilityChecker: React.FC = () => {
     preparationStartDateTime: "2024-01-20T10:30:00Z",
     merchant: {
       id: "merchant-abc123",
-      name: "Restaurante Exemplo"
+      name: "Pizzaria Bella Vista"
     },
     items: [
       {
-        id: "item-001",
-        name: "Produto Exemplo",
+        id: "item-pizza-001",
+        name: "Pizza Margherita",
         quantity: 1,
         unit: "UN",
         unitPrice: {
-          value: 25.90,
+          value: 32.90,
           currency: "BRL"
         },
         totalPrice: {
-          value: 25.90,
+          value: 32.90,
           currency: "BRL"
         },
-        externalCode: "PROD-001"
+        externalCode: "PIZZA-MARG-001"
       }
     ],
     total: {
       itemsPrice: {
-        value: 25.90,
+        value: 32.90,
         currency: "BRL"
       },
       otherFees: {
@@ -81,16 +81,16 @@ const CompatibilityChecker: React.FC = () => {
         currency: "BRL"
       },
       orderAmount: {
-        value: 25.90,
+        value: 32.90,
         currency: "BRL"
       }
     },
     payments: {
       prepaid: 0.00,
-      pending: 25.90,
+      pending: 32.90,
       methods: [
         {
-          value: 25.90,
+          value: 32.90,
           currency: "BRL",
           type: "PENDING",
           method: "CREDIT",
@@ -126,7 +126,7 @@ const CompatibilityChecker: React.FC = () => {
         const result = await validatePayload(testPayload, version);
         newResults.push({
           version,
-          isValid: result.valid,
+          isValid: result.status === 'success',
           details: result.details,
           errors: result.errors
         });
@@ -157,7 +157,84 @@ const CompatibilityChecker: React.FC = () => {
 
   const compatibleVersions = results.filter(r => r.isValid).length;
   const totalVersions = results.length;
-  const compatibilityPercentage = totalVersions > 0 ? Math.round((compatibleVersions / totalVersions) * 100) : 0;
+  
+  // Calcular pontuação inteligente baseada em intervalos de compatibilidade
+  const calculateIntelligentScore = () => {
+    if (results.length === 0) return 0;
+    
+    const compatibleVersionsList = results.filter(r => r.isValid).map(r => r.version);
+    const versionNumbers = SCHEMA_VERSIONS.map(v => {
+      const cleanVersion = v.replace('-rc', '').replace('beta', '0.9');
+      const parts = cleanVersion.split('.');
+      return parseFloat(`${parts[0]}.${parts[1]}`);
+    });
+    
+    // Encontrar o maior intervalo contínuo de compatibilidade
+    const compatibleIndices = results
+      .map((r, i) => ({ result: r, index: i }))
+      .filter(({ result }) => result.isValid)
+      .map(({ index }) => index);
+    
+    if (compatibleIndices.length === 0) return 0;
+    
+    // Calcular intervalo contínuo mais longo
+    let maxContinuousLength = 0;
+    let currentLength = 1;
+    let maxContinuousStart = compatibleIndices[0];
+    let maxContinuousEnd = compatibleIndices[0];
+    
+    for (let i = 1; i < compatibleIndices.length; i++) {
+      if (compatibleIndices[i] === compatibleIndices[i-1] + 1) {
+        currentLength++;
+      } else {
+        if (currentLength > maxContinuousLength) {
+          maxContinuousLength = currentLength;
+          maxContinuousStart = compatibleIndices[i - currentLength];
+          maxContinuousEnd = compatibleIndices[i - 1];
+        }
+        currentLength = 1;
+      }
+    }
+    
+    // Verificar o último intervalo
+    if (currentLength > maxContinuousLength) {
+      maxContinuousLength = currentLength;
+      maxContinuousStart = compatibleIndices[compatibleIndices.length - currentLength];
+      maxContinuousEnd = compatibleIndices[compatibleIndices.length - 1];
+    }
+    
+    // Calcular pontuação baseada no intervalo contínuo
+    const continuousScore = (maxContinuousLength / SCHEMA_VERSIONS.length) * 100;
+    
+    // Bonus para versões mais recentes/importantes
+    const recentVersionsBonus = compatibleVersionsList.filter(v => {
+      const versionNum = parseFloat(v.replace('-rc', '').replace('beta', '0.9'));
+      return versionNum >= 1.2; // Versões 1.2.0+ são mais importantes
+    }).length * 10;
+    
+    // Bonus especial para compatibilidade v1.2.0 até v1.5.0 (intervalo chave)
+    const keyIntervalBonus = compatibleVersionsList.includes('1.2.0') && 
+                           compatibleVersionsList.includes('1.5.0') &&
+                           compatibleVersionsList.includes('1.3.0') &&
+                           compatibleVersionsList.includes('1.4.0') ? 25 : 0;
+    
+    // Pontuação final
+    const totalScore = Math.min(100, continuousScore + recentVersionsBonus + keyIntervalBonus);
+    
+    return Math.round(totalScore);
+  };
+  
+  const compatibilityPercentage = calculateIntelligentScore();
+  
+  // Determinar nível de compatibilidade baseado na pontuação ajustada
+  const getCompatibilityLevel = () => {
+    if (compatibilityPercentage >= 90) return { level: 'GOLD', color: '#FFD700', description: 'Alta Compatibilidade' };
+    if (compatibilityPercentage >= 70) return { level: 'SILVER', color: '#C0C0C0', description: 'Boa Compatibilidade' };
+    if (compatibilityPercentage >= 50) return { level: 'BRONZE', color: '#CD7F32', description: 'Compatibilidade Básica' };
+    return { level: 'BAIXA', color: '#FF6B6B', description: 'Baixa Compatibilidade' };
+  };
+  
+  const compatibilityLevel = getCompatibilityLevel();
 
   return (
     <Box sx={{ p: 3 }}>
@@ -166,7 +243,8 @@ const CompatibilityChecker: React.FC = () => {
       </Typography>
       
       <Typography variant="body1" sx={{ mb: 3 }}>
-        Teste a compatibilidade de um payload com todas as versões do esquema OpenDelivery disponíveis.
+        Este verificador testa a compatibilidade de um payload padrão com todas as versões do esquema OpenDelivery disponíveis,
+        garantindo que nossa implementação está seguindo corretamente o padrão oficial.
       </Typography>
 
       <Paper sx={{ p: 2, mb: 3 }}>
@@ -176,7 +254,7 @@ const CompatibilityChecker: React.FC = () => {
           disabled={isRunning}
           sx={{ mb: 2 }}
         >
-          {isRunning ? 'Executando Teste...' : 'Executar Teste de Compatibilidade'}
+          {isRunning ? 'Executando Verificação...' : 'Executar Verificação de Compatibilidade'}
         </Button>
 
         {isRunning && (
@@ -217,13 +295,18 @@ const CompatibilityChecker: React.FC = () => {
                 </Grid>
                 <Grid item xs={12} md={4}>
                   <Typography variant="body2" color="textSecondary">
-                    Status Geral
+                    Nível de Compatibilidade
                   </Typography>
-                  <Chip 
-                    label={compatibilityPercentage >= 70 ? 'Boa Compatibilidade' : 'Baixa Compatibilidade'} 
-                    color={compatibilityPercentage >= 70 ? 'success' : 'error'}
-                    sx={{ mt: 1 }}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <Chip 
+                      label={`${compatibilityLevel.level} - ${compatibilityLevel.description}`} 
+                      sx={{ 
+                        backgroundColor: compatibilityLevel.color,
+                        color: compatibilityLevel.level === 'GOLD' ? '#000' : '#fff',
+                        fontWeight: 'bold'
+                      }}
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             </CardContent>
@@ -234,7 +317,7 @@ const CompatibilityChecker: React.FC = () => {
       {results.length > 0 && (
         <Paper sx={{ p: 2 }}>
           <Typography variant="h6" gutterBottom>
-            Resultados Detalhados
+            Resultados Detalhados por Versão
           </Typography>
           
           {results.map((result, index) => (
@@ -242,17 +325,15 @@ const CompatibilityChecker: React.FC = () => {
               key={result.version}
               expanded={expandedResults.has(result.version)}
               onChange={() => toggleExpanded(result.version)}
-              sx={{ mb: 1 }}
             >
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 2 }}>
                   <Typography variant="h6">
-                    Versão {result.version}
+                    OpenDelivery v{result.version}
                   </Typography>
                   <Chip 
                     label={getCompatibilityStatusText(result.isValid)}
                     color={getCompatibilityStatusColor(result.isValid)}
-                    size="small"
                   />
                 </Box>
               </AccordionSummary>

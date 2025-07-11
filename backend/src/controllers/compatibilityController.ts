@@ -10,14 +10,14 @@ const compatibilityService = new CompatibilityService();
 compatibilityRouter.post(
   '/',
   [
-    body('source_version')
+    body('from_version')
       .isString()
       .matches(/^\d+\.\d+\.\d+(-rc)?$/)
-      .withMessage('Invalid source version format'),
-    body('target_version')
+      .withMessage('Invalid from version format'),
+    body('to_version')
       .isString()
       .matches(/^\d+\.\d+\.\d+(-rc)?$/)
-      .withMessage('Invalid target version format'),
+      .withMessage('Invalid to version format'),
     body('payload')
       .isObject()
       .withMessage('Payload must be a valid JSON object'),
@@ -25,11 +25,11 @@ compatibilityRouter.post(
   validateRequest,
   async (req, res, next) => {
     try {
-      const { source_version, target_version, payload } = req.body;
+      const { from_version, to_version, payload } = req.body;
 
       const compatibilityResult = await compatibilityService.checkCompatibility(
-        source_version,
-        target_version,
+        from_version,
+        to_version,
         payload
       );
 

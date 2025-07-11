@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Box, AppBar, Toolbar, Typography, Container, Button } from '@mui/material';
+import { Box, AppBar, Toolbar, Typography, Container, Button, Link } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
@@ -17,7 +17,7 @@ const Layout = ({ children }: LayoutProps) => {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            OpenDelivery Validator
+            OpenDelivery API Schema Validator 2
           </Typography>
           <Button
             color="inherit"
@@ -57,10 +57,44 @@ const Layout = ({ children }: LayoutProps) => {
               : theme.palette.grey[800],
         }}
       >
-        <Container maxWidth="sm">
-          <Typography variant="body2" color="text.secondary" align="center">
-            OpenDelivery Validator © {new Date().getFullYear()}
-          </Typography>
+        <Container maxWidth="lg">
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" color="text.secondary" align="center">
+              OpenDelivery API Schema Validator 2 © {new Date().getFullYear()}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Link 
+                href="https://github.com/marcioreck/opendelivery-api-schema-validator2" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                color="primary"
+                sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                📁 Repositório GitHub
+              </Link>
+              <Link 
+                href="https://fazmercado.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                color="primary"
+                sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                👨‍💻 Portfólio Márcio Reck
+              </Link>
+              <Link 
+                href="https://www.opendelivery.com.br/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                color="primary"
+                sx={{ textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                🚀 OpenDelivery API
+              </Link>
+            </Box>
+            <Typography variant="caption" color="text.secondary" align="center">
+              Validação, compatibilidade e certificação de implementações da API OpenDelivery
+            </Typography>
+          </Box>
         </Container>
       </Box>
     </Box>

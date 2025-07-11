@@ -14,7 +14,7 @@ function Navbar() {
     <AppBar position="static">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 0, mr: 4 }}>
-          OpenDelivery Validator
+          OpenDelivery API Schema Validator 2
         </Typography>
         <Box sx={{ flexGrow: 1, display: 'flex', gap: 2 }}>
           {navItems.map(({ path, label }) => (
