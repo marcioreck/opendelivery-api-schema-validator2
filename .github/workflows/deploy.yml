@@ -71,19 +71,47 @@ jobs:
         mkdir -p deployment/backend
         
         # Copy frontend build
-        cp -r frontend/dist/* deployment/frontend/
-        cp frontend/.htaccess deployment/frontend/
+        if [ -d "frontend/dist" ]; then
+          cp -r frontend/dist/* deployment/frontend/
+        else
+          echo "❌ Frontend dist directory not found!"
+          exit 1
+        fi
+        [ -f "frontend/.htaccess" ] && cp frontend/.htaccess deployment/frontend/
         
         # Copy backend build and necessary files
-        cp -r backend/dist/* deployment/backend/
+        if [ -d "backend/dist" ]; then
+          cp -r backend/dist/* deployment/backend/
+        else
+          echo "❌ Backend dist directory not found!"
+          exit 1
+        fi
         cp backend/package*.json deployment/backend/
         cp -r backend/schemas deployment/backend/
         cp backend/start-production.sh deployment/backend/
-        cp backend/.htaccess deployment/backend/
+        [ -f "backend/.htaccess" ] && cp backend/.htaccess deployment/backend/
         cp install-deps.sh deployment/backend/
+        
+        # Verify critical files
+        echo "📁 Verifying deployment files..."
+        ls -la deployment/backend/
+        [ -f "deployment/backend/index.js" ] && echo "✅ index.js found" || echo "❌ index.js NOT found"
         
         # Create deployment info
         echo "$(date): Deployed from commit ${{ github.sha }}" > deployment/deploy-info.txt
+        
+    # Debug deployment package
+    - name: Debug deployment package
+      run: |
+        echo "🔍 Debug: Conteúdo do pacote de deployment"
+        echo "📁 Frontend files:"
+        ls -la deployment/frontend/ | head -10
+        echo "📁 Backend files:"
+        ls -la deployment/backend/
+        echo "📋 Verificações:"
+        [ -f "deployment/backend/index.js" ] && echo "✅ index.js presente" || echo "❌ index.js AUSENTE"
+        [ -f "deployment/backend/package.json" ] && echo "✅ package.json presente" || echo "❌ package.json AUSENTE"
+        [ -f "deployment/backend/start-production.sh" ] && echo "✅ start-production.sh presente" || echo "❌ start-production.sh AUSENTE"
         
     # Setup SSH
     - name: Setup SSH
@@ -113,8 +141,10 @@ jobs:
           --exclude='*.map' \
           --exclude='*.md' \
           --exclude='.git*' \
+          --exclude='node_modules' \
           --exclude='src' \
           --exclude='tests' \
+          --exclude='*.test.js' \
           deployment/backend/ \
           ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/api/
         

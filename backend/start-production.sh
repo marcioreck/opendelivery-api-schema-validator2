@@ -44,10 +44,41 @@ fi
 echo "✅ Node.js version: $(node --version)"
 echo "✅ npm version: $(npm --version)"
 
-# Verificar se o arquivo principal existe
-if [ ! -f "dist/index.js" ]; then
-    echo "❌ Arquivo dist/index.js não encontrado!"
-    echo "🔧 Verifique se o build foi executado corretamente."
+# Mostrar conteúdo do diretório atual
+echo "📁 Conteúdo do diretório atual:"
+ls -la
+
+# Detectar arquivo principal
+INDEX_FILE=""
+POSSIBLE_PATHS=(
+    "index.js"
+    "dist/index.js"
+    "src/index.js"
+    "backend/index.js"
+    "backend/dist/index.js"
+    "./index.js"
+    "./dist/index.js"
+)
+
+echo "🔍 Procurando arquivo principal..."
+for path in "${POSSIBLE_PATHS[@]}"; do
+    if [ -f "$path" ]; then
+        INDEX_FILE="$path"
+        echo "✅ Arquivo encontrado: $INDEX_FILE"
+        break
+    else
+        echo "❌ Não encontrado: $path"
+    fi
+done
+
+if [ -z "$INDEX_FILE" ]; then
+    echo "❌ ERRO: Arquivo principal não encontrado!"
+    echo "📁 Conteúdo do diretório atual:"
+    ls -la
+    echo "📁 Conteúdo do backend/ (se existir):"
+    [ -d "backend" ] && ls -la backend/ || echo "Diretório backend não existe"
+    echo "� Conteúdo do dist/ (se existir):"
+    [ -d "dist" ] && ls -la dist/ || echo "Diretório dist não existe"
     exit 1
 fi
 
@@ -64,14 +95,14 @@ echo "🚀 Iniciando servidor backend..."
 # Usar PM2 para gerenciamento de processos em produção (se disponível)
 if command -v pm2 &> /dev/null; then
     echo "📦 Usando PM2 para gerenciamento de processos..."
-    pm2 start dist/index.js --name "opendelivery-api-backend" --env production
+    pm2 start $INDEX_FILE --name "opendelivery-api-backend" --env production
     pm2 save
     echo "✅ Servidor iniciado com PM2!"
     pm2 status
 else
     echo "📦 Instalando PM2..."
     npm install -g pm2
-    pm2 start dist/index.js --name "opendelivery-api-backend" --env production
+    pm2 start $INDEX_FILE --name "opendelivery-api-backend" --env production
     pm2 save
     echo "✅ Servidor iniciado com PM2!"
     pm2 status
