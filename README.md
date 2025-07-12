@@ -117,8 +117,25 @@ npm run dev
 ```
 
 A aplicação estará disponível em:
-- **Frontend**: http://localhost:3000
-- **API Backend**: http://localhost:8000
+- **Frontend**: http://localhost:8000
+- **API Backend**: http://localhost:3001
+
+## Demo Online
+
+Uma versão online desta ferramenta está disponível em: **https://fazmercado.com/public/opendelivery-api-schema-validator2/**
+
+## Build para Produção
+
+```bash
+# Build completo (backend + frontend)
+npm run build:all
+
+# Build apenas frontend
+cd frontend && npm run build
+
+# Build apenas backend
+cd backend && npm run build
+```
 
 ### Execução de Testes
 

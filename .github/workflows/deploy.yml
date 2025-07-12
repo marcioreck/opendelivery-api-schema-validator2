@@ -1,0 +1,138 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    # Build Backend
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        npm ci
+        
+    - name: Build backend
+      run: |
+        cd backend
+        npm run build
+        
+    - name: Test backend
+      run: |
+        cd backend
+        npm test
+        
+    # Build Frontend
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+        
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+        
+    - name: Test frontend
+      run: |
+        cd frontend
+        npm run test
+        
+    # Prepare deployment files
+    - name: Create deployment package
+      run: |
+        mkdir -p deployment/frontend
+        mkdir -p deployment/backend
+        
+        # Copy frontend build
+        cp -r frontend/dist/* deployment/frontend/
+        cp frontend/.htaccess deployment/frontend/
+        
+        # Copy backend build and necessary files
+        cp -r backend/dist/* deployment/backend/
+        cp backend/package*.json deployment/backend/
+        cp -r backend/schemas deployment/backend/
+        cp backend/start-production.sh deployment/backend/
+        cp backend/.htaccess deployment/backend/
+        
+        # Create deployment info
+        echo "$(date): Deployed from commit ${{ github.sha }}" > deployment/deploy-info.txt
+        
+    # Setup SSH
+    - name: Setup SSH
+      if: github.ref == 'refs/heads/main'
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        
+    # Deploy Frontend via rsync
+    - name: Deploy Frontend
+      if: github.ref == 'refs/heads/main'
+      run: |
+        rsync -avz --delete \
+          --exclude='*.map' \
+          --exclude='*.md' \
+          --exclude='.git*' \
+          deployment/frontend/ \
+          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/
+        
+    # Deploy Backend via rsync
+    - name: Deploy Backend API
+      if: github.ref == 'refs/heads/main'
+      run: |
+        rsync -avz --delete \
+          --exclude='*.map' \
+          --exclude='*.md' \
+          --exclude='.git*' \
+          --exclude='src' \
+          --exclude='tests' \
+          deployment/backend/ \
+          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/api/
+        
+    # Install production dependencies on server
+    - name: Install Backend Dependencies
+      if: github.ref == 'refs/heads/main'
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          "cd ${{ secrets.TARGET_DIR }}/api && npm ci --only=production"
+        
+    # Restart backend service
+    - name: Restart Backend Service
+      if: github.ref == 'refs/heads/main'
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          "cd ${{ secrets.TARGET_DIR }}/api && ./start-production.sh"
+        
+    # Cleanup SSH
+    - name: Cleanup SSH
+      if: always()
+      run: |
+        rm -f ~/.ssh/id_rsa
+        
+    # Notify deployment
+    - name: Notify deployment status
+      if: always()
+      run: |
+        if [ ${{ job.status }} == 'success' ]; then
+          echo "✅ Deployment successful!"
+          echo "Frontend: https://fazmercado.com/public/opendelivery-api-schema-validator2/"
+          echo "Backend API: https://fazmercado.com/public/opendelivery-api-schema-validator2/api/"
+        else
+          echo "❌ Deployment failed!"
+        fi

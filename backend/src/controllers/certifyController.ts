@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 import { CertificationService } from '../services/CertificationService';
 import { validateRequest } from '../utils/validateRequest';
@@ -19,7 +20,7 @@ certifyRouter.post(
       .withMessage('Payload must be a valid JSON object'),
   ],
   validateRequest,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { schema_version, payload } = req.body;
 

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 import { CompatibilityService } from '../services/CompatibilityService';
 import { validateRequest } from '../utils/validateRequest';
@@ -23,7 +24,7 @@ compatibilityRouter.post(
       .withMessage('Payload must be a valid JSON object'),
   ],
   validateRequest,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { from_version, to_version, payload } = req.body;
 

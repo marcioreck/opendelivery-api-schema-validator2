@@ -16,8 +16,20 @@ const port = process.env.PORT || 3001;
 const schemaManager = new SchemaManager();
 
 // Middleware
-app.use(helmet());
-app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: false, // Allow for development
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://fazmercado.com', 'https://www.fazmercado.com']
+    : ['http://localhost:8000', 'http://127.0.0.1:8000'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 

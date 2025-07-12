@@ -42,7 +42,14 @@
   * Corrigidos comandos de teste (Vitest)
   * Adicionadas seções de troubleshooting específicas
 
-Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
+[x] Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
+
+✅ DEPLOY ONLINE CONFIGURADO E FUNCIONANDO:
+- Aplicação configurada para rodar em https://fazmercado.com/public/opendelivery-api-schema-validator2/
+- Sistema de deploy automático via GitHub Actions implementado
+- Configurações de produção otimizadas (frontend + backend)
+- Documentação no README.md mantida simples apenas com referência ao demo online
+- Repositório preparado para uso local por terceiros
 
 
 

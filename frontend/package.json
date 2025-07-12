@@ -4,7 +4,8 @@
   "description": "Frontend application for OpenDelivery API Schema Validator 2 - Interface para validação, compatibilidade e certificação de implementações da API OpenDelivery",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "build:check": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",

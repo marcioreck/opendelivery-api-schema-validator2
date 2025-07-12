@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { ValidationResult, CompatibilityReport, CertificationResult, ApiVersion } from './types';
 
-// Use relative URLs to leverage Vite's proxy
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+// Configure API base URL based on environment
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? '/public/opendelivery-api-schema-validator2/api' : '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

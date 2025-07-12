@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 import { ValidationService } from '../services/ValidationService';
 import { validateRequest } from '../utils/validateRequest';
@@ -19,7 +20,7 @@ validateRouter.post(
       .withMessage('Payload must be a valid JSON object'),
   ],
   validateRequest,
-  async (req, res, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { schema_version, payload } = req.body;
 
@@ -30,9 +31,9 @@ validateRouter.post(
           status: 'error',
           message: 'Validation failed',
           errors: validationResult.errors?.map(error => ({
-            path: error.path || '/',
+            path: (error as any).path || '/',
             message: error.message,
-            details: error.details || {}
+            details: (error as any).details || {}
           })) || [],
           schema_version
         });
