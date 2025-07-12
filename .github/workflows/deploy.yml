@@ -80,6 +80,7 @@ jobs:
         cp -r backend/schemas deployment/backend/
         cp backend/start-production.sh deployment/backend/
         cp backend/.htaccess deployment/backend/
+        cp install-deps.sh deployment/backend/
         
         # Create deployment info
         echo "$(date): Deployed from commit ${{ github.sha }}" > deployment/deploy-info.txt
@@ -122,14 +123,20 @@ jobs:
       if: github.ref == 'refs/heads/main'
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-          "cd ${{ secrets.TARGET_DIR }}/api && npm ci --only=production"
+          "cd ${{ secrets.TARGET_DIR }}/api && \
+           chmod +x install-deps.sh && \
+           ./install-deps.sh"
         
     # Restart backend service
     - name: Restart Backend Service
       if: github.ref == 'refs/heads/main'
       run: |
         ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-          "cd ${{ secrets.TARGET_DIR }}/api && ./start-production.sh"
+          "export TERM=xterm && \
+           export PATH=\$PATH:/usr/local/bin:/usr/bin:/home/\$USER/.nvm/versions/node/*/bin && \
+           cd ${{ secrets.TARGET_DIR }}/api && \
+           chmod +x start-production.sh && \
+           ./start-production.sh"
         
     # Cleanup SSH
     - name: Cleanup SSH
