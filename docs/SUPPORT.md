@@ -1,42 +1,84 @@
-# OpenDelivery API Schema Validator 2 - Guia de Suporte
+# OpenDelivery Enhanced Validator 2 - Guia de Suporte
+
+Este documento fornece informações abrangentes sobre o uso e manutenção do Enhanced OpenDelivery API Schema Validator 2.
 
 ## Índice
-1. [Instruções de Uso](#instruções-de-uso)
-2. [Procedimentos de Manutenção](#procedimentos-de-manutenção)
-3. [Solução de Problemas](#solução-de-problemas)
-4. [Documentação da API](#documentação-da-api)
-5. [Documentação de Testes](#documentação-de-testes)
+1. [Recursos](#recursos)
+2. [Primeiros Passos](#primeiros-passos)
+3. [Instruções de Uso](#instruções-de-uso)
+4. [Procedimentos de Manutenção](#procedimentos-de-manutenção)
+5. [Solução de Problemas](#solução-de-problemas)
+6. [Documentação da API](#documentação-da-api)
+7. [Documentação de Testes](#documentação-de-testes)
+8. [Considerações de Segurança](#considerações-de-segurança)
+9. [Contribuindo](#contribuindo)
+10. [Suporte Técnico](#suporte-técnico)
+
+## Recursos
+
+- Validação de esquemas multi-versão (1.0.0 → 1.6.0-rc)
+- Relatórios de compatibilidade entre versões da API
+- Sistema de certificação OpenDelivery Ready
+- API de validação em tempo real
+- Relatórios detalhados de erro
+- Verificações de segurança
+
+## Primeiros Passos
+
+### Pré-requisitos
+
+- Node.js 18.x ou superior
+- npm 8.x ou superior
+
+### Instalação
+
+```bash
+# Clone o repositório
+git clone <repository-url>
+cd opendelivery-validator
+
+# Instale as dependências
+npm install
+
+# Copie a configuração do ambiente
+cp .env.example .env
+
+# Inicie o servidor
+npm run dev
+```
 
 ## Instruções de Uso
 
-### Validação de Esquemas
+### Usando a Interface Web
+
+#### Validação de Esquemas
 1. Navegue até a página do Validador
 2. Selecione a versão do esquema no dropdown (1.0.0 → 1.6.0-rc)
 3. Digite ou cole seu payload JSON no editor
 4. Clique em "Validate" para verificar seu payload
 5. Revise os resultados da validação no painel direito
 
-### Verificação de Compatibilidade
+#### Verificação de Compatibilidade
 1. Navegue até a página de Compatibilidade
 2. Selecione as versões de origem e destino
 3. Digite seu payload JSON
 4. Clique em "Check Compatibility"
 5. Revise os resultados de compatibilidade e mudanças disruptivas
 
-### Certificação OpenDelivery Ready
+#### Certificação OpenDelivery Ready
 1. Navegue até a página de Certificação
 2. Selecione a versão do esquema
 3. Digite seu payload JSON
 4. Clique em "Certify"
 5. Revise a pontuação de certificação e verificações detalhadas
 
-### Verificador de Autenticidade
+#### Verificador de Autenticidade
 1. Navegue até a aba "Verificador de Autenticidade"
 2. Clique em "Executar Verificação de Autenticidade"
 3. Aguarde a verificação em todas as versões do esquema
 4. Revise os resultados para confirmar a autenticidade da API
 
-### Payloads de Teste
+#### Payloads de Teste
 1. Clique no botão "Load Example" em qualquer página
 2. Selecione a categoria desejada:
    - **Valid Payloads**: Exemplos válidos básicos e completos
@@ -44,9 +86,56 @@
    - **Compatibility Payloads**: Para teste de migração entre versões
 3. Escolha o payload específico para carregá-lo no editor
 
+### Usando a API
+
+#### Validar Payload
+
+```http
+POST /validate
+Content-Type: application/json
+
+{
+  "payload": {
+    // Seu payload OpenDelivery aqui
+  },
+  "version": "1.6.0-rc" // Opcional - se omitido, valida contra todas as versões
+}
+```
+
+Resposta:
+```json
+{
+  "isValid": true,
+  "version": "1.6.0-rc"
+}
+```
+
+Ou com erros:
+```json
+{
+  "isValid": false,
+  "version": "1.6.0-rc",
+  "errors": [
+    {
+      "path": "/order/items/0",
+      "message": "propriedade obrigatória 'quantity' ausente",
+      "schemaPath": "#/required"
+    }
+  ]
+}
+```
+
 ## Procedimentos de Manutenção
 
+### Atualizando Esquemas
+
+O validador verifica automaticamente novas versões de esquema diariamente. Para atualizar manualmente:
+
+1. Atualize os arquivos de esquema no diretório `schemas/`
+2. Reinicie o serviço
+
 ### Adicionando Novas Versões de Esquema
+
 1. Adicione o arquivo de esquema em `backend/schemas/`
 2. Atualize a constante `SCHEMA_VERSIONS` em:
    - `frontend/src/pages/ValidatorPage.tsx`
@@ -55,48 +144,76 @@
 3. Atualize a lógica de carregamento de esquemas no `SchemaManager`
 4. Execute os testes para verificar a compatibilidade
 
+### Adicionando Novas Versões da API
+
+1. Adicione nova versão ao tipo `ApiVersion` em `src/types/index.ts`
+2. Adicione arquivo de esquema no diretório `schemas/`
+3. Reconstrua e reinicie o serviço
+
 ### Atualizando Regras de Validação
+
 1. Modifique os arquivos de esquema em `backend/schemas/`
 2. Atualize a lógica de validação no `ValidationService` se necessário
 3. Atualize a lógica no `ValidationEngine` se necessário
 4. Adicione testes para as novas regras de validação
 
 ### Atualizando Regras de Compatibilidade
+
 1. Modifique `CompatibilityService.checkCompatibility()`
 2. Atualize a lógica de detecção de mudanças disruptivas
 3. Adicione testes para as novas regras de compatibilidade
 
 ### Atualizando Verificações de Certificação
+
 1. Modifique `CertificationService.certify()`
 2. Atualize a lógica de pontuação se necessário
 3. Adicione testes para as novas verificações de certificação
 
 ### Atualizando Payloads de Teste
+
 1. Modifique `frontend/src/components/TestPayloads.tsx`
 2. Adicione novos payloads nas categorias apropriadas
 3. Execute os testes para verificar a integridade dos payloads
+
+### Monitoramento
+
+- Verifique `error.log` e `combined.log` para problemas operacionais
+- Monitore o endpoint `/health` para status do serviço
+- Use as métricas fornecidas para acompanhamento de performance
 
 ## Solução de Problemas
 
 ### Problemas Comuns
 
-#### Erros de Validação
+#### 1. Falhas no Carregamento de Esquemas
+- Verifique o formato do arquivo de esquema (deve ser YAML válido)
+- Verifique as permissões do arquivo
+- Verifique a compatibilidade da versão do esquema
+
+#### 2. Erros de Validação
+- Revise as mensagens de erro nos logs
+- Verifique o formato do payload
 - Verifique a sintaxe JSON
 - Confirme a compatibilidade da versão do esquema
 - Revise campos obrigatórios
 - Verifique tipos de dados
 
-#### Problemas de Compatibilidade
+#### 3. Problemas de Performance
+- Monitore o uso de memória
+- Verifique configurações de rate limiting
+- Revise tamanhos de payload
+
+#### 4. Problemas de Compatibilidade
 - Certifique-se de que a versão de origem é anterior à versão de destino
 - Verifique mudanças disruptivas
 - Confirme depreciações de campos
 
-#### Problemas de Certificação
+#### 5. Problemas de Certificação
 - Valide o payload primeiro
 - Verifique requisitos de segurança
 - Revise práticas recomendadas
 
-#### Problemas de Conectividade
+#### 6. Problemas de Conectividade
 - Verifique se o backend está rodando na porta 8000
 - Confirme se o frontend está rodando na porta 3000
 - Verifique configurações de CORS
@@ -349,45 +466,28 @@ npm test -- TestPayloads.test.tsx
 }
 ```
 
-### Níveis de Certificação
+## Considerações de Segurança
 
-#### GOLD (90-100 pontos)
-- Validação completa do esquema
-- Segurança implementada
-- Práticas recomendadas seguidas
-- Documentação completa
+- Rate limiting habilitado por padrão
+- Todos os endpoints usam HTTPS
+- Validação e sanitização de entrada
+- Atualizações regulares de segurança
+- Configuração de CORS
 
-#### SILVER (70-89 pontos)
-- Validação do esquema com pequenos problemas
-- Segurança básica implementada
-- Algumas práticas recomendadas seguidas
+## Contribuindo
 
-#### BRONZE (50-69 pontos)
-- Validação básica do esquema
-- Segurança mínima implementada
-- Práticas básicas seguidas
-
-#### NOT_CERTIFIED (< 50 pontos)
-- Falha na validação básica
-- Problemas de segurança
-- Práticas inadequadas
-
-## Versões Suportadas
-
-### Esquemas OpenDelivery
-- **1.0.0**: Versão inicial
-- **1.0.1**: Correções e melhorias
-- **1.1.0**: Novas funcionalidades
-- **1.1.1**: Correções
-- **1.2.0**: Expansão da API
-- **1.2.1**: Correções
-- **1.3.0**: Melhorias de segurança
-- **1.4.0**: Novos endpoints
-- **1.5.0**: Otimizações
-- **1.6.0-rc**: Versão release candidate
-- **beta**: Versão beta com funcionalidades experimentais
+1. Faça um fork do repositório
+2. Crie uma branch para sua funcionalidade
+3. Envie um pull request
 
 ## Suporte Técnico
+
+Para problemas e solicitações de funcionalidades:
+1. Verifique problemas existentes
+2. Crie um novo problema com:
+   - Informações da versão
+   - Passos para reproduzir
+   - Comportamento esperado vs atual
 
 Para suporte adicional:
 1. Consulte a [documentação da API](API.md)
@@ -400,7 +500,11 @@ Para suporte adicional:
 - **Documentação Oficial**: Consulte o site oficial para especificações completas
 - **GitHub**: [https://github.com/marcioreck/opendelivery-api-schema-validator2](https://github.com/marcioreck/opendelivery-api-schema-validator2)
 
+## Licença
+
+[Tipo de Licença] - veja o arquivo LICENSE para detalhes
+
 ---
 
-*OpenDelivery API Schema Validator 2 - Guia de Suporte*  
-*Desenvolvido por Márcio Reck* 
+*OpenDelivery Enhanced Validator 2 - Guia de Suporte*  
+*Desenvolvido por Márcio Reck*

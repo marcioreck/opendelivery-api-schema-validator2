@@ -18,13 +18,27 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+        
+    # Cache for multiple package-lock.json files
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.npm
+          node_modules
+          backend/node_modules
+          frontend/node_modules
+        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-npm-
+        
+    # Install all dependencies
+    - name: Install all dependencies
+      run: npm run install:all
         
     # Build Backend
     - name: Install backend dependencies
-      run: |
-        cd backend
-        npm ci
+      run: echo "Dependencies already installed"
         
     - name: Build backend
       run: |
@@ -38,9 +52,7 @@ jobs:
         
     # Build Frontend
     - name: Install frontend dependencies
-      run: |
-        cd frontend
-        npm ci
+      run: echo "Dependencies already installed"
         
     - name: Build frontend
       run: |

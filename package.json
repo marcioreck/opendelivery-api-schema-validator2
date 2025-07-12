@@ -10,6 +10,7 @@
     "test": "jest",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
+    "install:all": "npm ci && cd backend && npm ci && cd ../frontend && npm ci",
     "build:all": "npm run build && cd frontend && npm run build && cd ../backend && npm run build",
     "deploy:build": "npm run build:all",
     "deploy:test": "npm test && cd frontend && npm test && cd ../backend && npm test"
