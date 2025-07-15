@@ -3,7 +3,7 @@ import { ValidationResult, CompatibilityReport, CertificationResult, ApiVersion 
 
 // Configure API base URL based on environment
 const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD ? '/public/opendelivery-api-schema-validator2/api' : '');
+  (import.meta.env.PROD ? '/opendelivery-api-schema-validator2/api' : '');
 
 const api = axios.create({
   baseURL: API_BASE_URL,

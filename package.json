@@ -1,6 +1,6 @@
 {
   "name": "opendelivery-api-schema-validator2",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "OpenDelivery API Schema Validator 2 - Ferramenta avançada para validação, verificação de compatibilidade e certificação de implementações da API OpenDelivery",
   "main": "dist/index.js",
   "scripts": {

@@ -65,53 +65,61 @@ jobs:
         npm run test
         
     # Prepare deployment files
-    - name: Create deployment package
+    - name: Prepare deployment files
       run: |
-        mkdir -p deployment/frontend
-        mkdir -p deployment/backend
+        mkdir -p deployment/public/opendelivery-api-schema-validator2
+        mkdir -p deployment/public/opendelivery-api-schema-validator2/api
         
-        # Copy frontend build
+        # Copy frontend build to main directory
         if [ -d "frontend/dist" ]; then
-          cp -r frontend/dist/* deployment/frontend/
+          cp -r frontend/dist/* deployment/public/opendelivery-api-schema-validator2/
         else
           echo "❌ Frontend dist directory not found!"
           exit 1
         fi
-        [ -f "frontend/.htaccess" ] && cp frontend/.htaccess deployment/frontend/
+        [ -f "frontend/.htaccess" ] && cp frontend/.htaccess deployment/public/opendelivery-api-schema-validator2/
         
-        # Copy backend build and necessary files
+        # Copy backend build to /api subdirectory
         if [ -d "backend/dist" ]; then
-          cp -r backend/dist/* deployment/backend/
+          cp -r backend/dist/* deployment/public/opendelivery-api-schema-validator2/api/
         else
           echo "❌ Backend dist directory not found!"
           exit 1
         fi
-        cp backend/package*.json deployment/backend/
-        cp -r backend/schemas deployment/backend/
-        cp backend/start-production.sh deployment/backend/
-        [ -f "backend/.htaccess" ] && cp backend/.htaccess deployment/backend/
-        cp install-deps.sh deployment/backend/
+        cp backend/package*.json deployment/public/opendelivery-api-schema-validator2/api/
+        cp -r backend/schemas deployment/public/opendelivery-api-schema-validator2/api/
+        cp backend/start-production.sh deployment/public/opendelivery-api-schema-validator2/api/
+        [ -f "backend/.htaccess" ] && cp backend/.htaccess deployment/public/opendelivery-api-schema-validator2/api/
+        cp install-deps.sh deployment/public/opendelivery-api-schema-validator2/api/
+        
+        # Create production config in API directory
+        echo "NODE_ENV=production" > deployment/public/opendelivery-api-schema-validator2/api/.env.production
+        echo "PORT=3001" >> deployment/public/opendelivery-api-schema-validator2/api/.env.production
+        echo "FRONTEND_URL=https://fazmercado.com/opendelivery-api-schema-validator2" >> deployment/public/opendelivery-api-schema-validator2/api/.env.production
+        echo "CORS_ORIGIN=https://fazmercado.com" >> deployment/public/opendelivery-api-schema-validator2/api/.env.production
         
         # Verify critical files
         echo "📁 Verifying deployment files..."
-        ls -la deployment/backend/
-        [ -f "deployment/backend/index.js" ] && echo "✅ index.js found" || echo "❌ index.js NOT found"
+        ls -la deployment/public/opendelivery-api-schema-validator2/
+        ls -la deployment/public/opendelivery-api-schema-validator2/api/
+        [ -f "deployment/public/opendelivery-api-schema-validator2/api/index.js" ] && echo "✅ index.js found" || echo "❌ index.js NOT found"
         
         # Create deployment info
-        echo "$(date): Deployed from commit ${{ github.sha }}" > deployment/deploy-info.txt
+        echo "$(date): Deployed from commit ${{ github.sha }}" > deployment/public/opendelivery-api-schema-validator2/deploy-info.txt
         
     # Debug deployment package
     - name: Debug deployment package
       run: |
         echo "🔍 Debug: Conteúdo do pacote de deployment"
-        echo "📁 Frontend files:"
-        ls -la deployment/frontend/ | head -10
-        echo "📁 Backend files:"
-        ls -la deployment/backend/
+        echo "📁 Aplicação completa:"
+        ls -la deployment/public/opendelivery-api-schema-validator2/ | head -10
+        echo "📁 API Backend:"
+        ls -la deployment/public/opendelivery-api-schema-validator2/api/
         echo "📋 Verificações:"
-        [ -f "deployment/backend/index.js" ] && echo "✅ index.js presente" || echo "❌ index.js AUSENTE"
-        [ -f "deployment/backend/package.json" ] && echo "✅ package.json presente" || echo "❌ package.json AUSENTE"
-        [ -f "deployment/backend/start-production.sh" ] && echo "✅ start-production.sh presente" || echo "❌ start-production.sh AUSENTE"
+        [ -f "deployment/public/opendelivery-api-schema-validator2/api/index.js" ] && echo "✅ index.js presente" || echo "❌ index.js AUSENTE"
+        [ -f "deployment/public/opendelivery-api-schema-validator2/api/package.json" ] && echo "✅ package.json presente" || echo "❌ package.json AUSENTE"
+        [ -f "deployment/public/opendelivery-api-schema-validator2/api/start-production.sh" ] && echo "✅ start-production.sh presente" || echo "❌ start-production.sh AUSENTE"
+        [ -f "deployment/public/opendelivery-api-schema-validator2/index.html" ] && echo "✅ Frontend index.html presente" || echo "❌ Frontend index.html AUSENTE"
         
     # Setup SSH
     - name: Setup SSH
@@ -123,30 +131,15 @@ jobs:
         ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
         
     # Deploy Frontend via rsync
-    - name: Deploy Frontend
+    - name: Deploy Complete Application
       if: github.ref == 'refs/heads/main'
       run: |
         rsync -avz --delete \
           --exclude='*.map' \
           --exclude='*.md' \
           --exclude='.git*' \
-          deployment/frontend/ \
+          deployment/public/opendelivery-api-schema-validator2/ \
           ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/
-        
-    # Deploy Backend via rsync
-    - name: Deploy Backend API
-      if: github.ref == 'refs/heads/main'
-      run: |
-        rsync -avz --delete \
-          --exclude='*.map' \
-          --exclude='*.md' \
-          --exclude='.git*' \
-          --exclude='node_modules' \
-          --exclude='src' \
-          --exclude='tests' \
-          --exclude='*.test.js' \
-          deployment/backend/ \
-          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.TARGET_DIR }}/api/
         
     # Install production dependencies on server
     - name: Install Backend Dependencies
@@ -180,8 +173,8 @@ jobs:
       run: |
         if [ ${{ job.status }} == 'success' ]; then
           echo "✅ Deployment successful!"
-          echo "Frontend: https://fazmercado.com/public/opendelivery-api-schema-validator2/"
-          echo "Backend API: https://fazmercado.com/public/opendelivery-api-schema-validator2/api/"
+          echo "Frontend: https://fazmercado.com/opendelivery-api-schema-validator2/"
+          echo "Backend API: https://fazmercado.com/opendelivery-api-schema-validator2/api/"
         else
           echo "❌ Deployment failed!"
         fi

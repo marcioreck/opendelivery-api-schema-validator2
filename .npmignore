@@ -1,0 +1,72 @@
+# Development files
+src/
+*.ts
+*.test.js
+*.test.ts
+tsconfig.json
+jest.config.js
+nodemon.json
+
+# Build artifacts
+*.tsbuildinfo
+*.map
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and test results
+coverage/
+.jest/
+.nyc_output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+.tmp/
+temp/
+
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Other
+.gitignore
+.github/
+docs/
+todo.md
+deploy/
+deployment/
+scripts/
+*.sh
+!setup-local.sh

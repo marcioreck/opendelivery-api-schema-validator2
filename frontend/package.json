@@ -1,6 +1,6 @@
 {
   "name": "opendelivery-api-schema-validator2-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Frontend application for OpenDelivery API Schema Validator 2 - Interface para validação, compatibilidade e certificação de implementações da API OpenDelivery",
   "scripts": {
     "dev": "vite",

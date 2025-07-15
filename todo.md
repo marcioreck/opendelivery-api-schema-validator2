@@ -42,14 +42,37 @@
   * Corrigidos comandos de teste (Vitest)
   * Adicionadas seções de troubleshooting específicas
 
-[x] Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
+[x] Preparar o repositório para uso local por terceiros:
+- [x] Repositório preparado para uso local por terceiros
+- [x] Criado script setup-local.sh para instalação automática
+- [x] Melhorada documentação de instalação no README.md
+- [x] Adicionadas instruções claras para setup manual e automático
 
-✅ DEPLOY ONLINE CONFIGURADO E FUNCIONANDO:
-- Aplicação configurada para rodar em https://fazmercado.com/public/opendelivery-api-schema-validator2/
-- Sistema de deploy automático via GitHub Actions implementado
-- Configurações de produção otimizadas (frontend + backend)
-- Documentação no README.md mantida simples apenas com referência ao demo online
-- Repositório preparado para uso local por terceiros
+[x] DEPLOY ONLINE CONFIGURADO E FUNCIONANDO:
+- [x] Criado script deploy.sh para preparar deployment
+- [x] Configurado GitHub Actions para deploy automático
+- [x] Criada estrutura de deployment para produção
+- [x] Preparado para deploy em https://fazmercado.com/opendelivery-api-schema-validator2/
+- [x] Configurações de produção otimizadas (frontend + backend)
+- [x] Documentação mantida com referência ao demo online
 
+[x] Acertar a versão atual da ferramenta na documentação e no código:
+- [x] Versão atualizada para 2.0.0 em todos os package.json
+- [x] Versão sincronizada entre backend, frontend e projeto principal
+- [x] Documentação atualizada com a versão correta
 
+[x] Fazer um package no github:
+- [x] Configurado package.json para publicação
+- [x] Criado .npmignore para controlar arquivos incluídos
+- [x] Preparado projeto para release no GitHub
+- [x] Criado script prepare-release.sh para automação
 
+[x] Criar e lançar um release no github:
+- [x] Criado RELEASE_NOTES.md com informações detalhadas
+- [x] Criado script prepare-release.sh para automatizar o processo
+- [x] Configurado para criar tag de release automaticamente
+- [x] Preparadas instruções para release no GitHub
+
+[ ] Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
+
+[ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.

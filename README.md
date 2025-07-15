@@ -84,20 +84,27 @@ opendelivery-api-schema-validator2/
 
 ### Instalação
 
-1. Clone o repositório:
+#### Método 1: Setup Automático (Recomendado)
 ```bash
+# Clone o repositório
 git clone https://github.com/marcioreck/opendelivery-api-schema-validator2.git
 cd opendelivery-api-schema-validator2
+
+# Execute o script de setup local
+./setup-local.sh
 ```
 
-2. Instale as dependências do backend:
+#### Método 2: Setup Manual
 ```bash
+# Clone o repositório
+git clone https://github.com/marcioreck/opendelivery-api-schema-validator2.git
+cd opendelivery-api-schema-validator2
+
+# Instale as dependências do backend
 cd backend
 npm install
-```
 
-3. Instale as dependências do frontend:
-```bash
+# Instale as dependências do frontend
 cd ../frontend
 npm install
 ```
@@ -122,7 +129,7 @@ A aplicação estará disponível em:
 
 ## Demo Online
 
-Uma versão online desta ferramenta está disponível em: **https://fazmercado.com/public/opendelivery-api-schema-validator2/**
+Uma versão online desta ferramenta está disponível em: **https://fazmercado.com/opendelivery-api-schema-validator2/**
 
 ## Build para Produção
 
