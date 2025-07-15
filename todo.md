@@ -90,7 +90,13 @@
 - [x] Corrigido erro de compilação do MonacoEditor component
 - [x] Removida prop onError inexistente do Monaco Editor
 - [x] Implementado timeout fallback para Monaco Editor
-- [x] Todos os testes passando (18/18)
+- [x] Substituído uso direto do Monaco Editor nas páginas pelo componente customizado
+- [x] Corrigido problema "Loading..." nos campos de Compatibility e Certification
+- [x] Todos os testes passando (21/21)
+- [x] Criado DEPLOY_TROUBLESHOOTING.md com soluções para problemas comuns
+- [x] Criado script deploy-production.sh para automatizar deploy
+- [x] Atualizado .htaccess para servir assets corretamente
+- [x] Atualizado CSP para permitir scripts externos necessários
 - [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.

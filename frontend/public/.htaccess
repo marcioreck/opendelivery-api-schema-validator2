@@ -5,27 +5,21 @@ RewriteBase /opendelivery-api-schema-validator2/
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Servir arquivos estáticos diretamente com headers apropriados
-<FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
-    # Permitir acesso direto aos arquivos
-    Header set Access-Control-Allow-Origin "*"
-    Header set Cache-Control "public, max-age=31536000, immutable"
-    
-    # Garantir que o arquivo existe
-    RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^.*$ - [L]
-</FilesMatch>
-
-# Servir arquivos estáticos diretamente se existirem
+# Servir arquivos estáticos diretamente - REGRA PRINCIPAL
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^.*$ - [L]
 
-# Servir arquivos do diretório assets se existirem
+# Servir arquivos de assets do diretório correto
 RewriteCond %{REQUEST_URI} ^/opendelivery-api-schema-validator2/assets/
 RewriteCond %{DOCUMENT_ROOT}/opendelivery-api-schema-validator2%{REQUEST_URI} -f
-RewriteRule ^.*$ - [L]
+RewriteRule ^assets/(.*)$ /opendelivery-api-schema-validator2/assets/$1 [L]
 
-# Redirecionar requisições de assets para o caminho correto
+# Fallback para assets sem path completo
+RewriteCond %{REQUEST_URI} ^/assets/
+RewriteCond %{DOCUMENT_ROOT}/opendelivery-api-schema-validator2%{REQUEST_URI} -f
+RewriteRule ^assets/(.*)$ /opendelivery-api-schema-validator2/assets/$1 [L]
+
+# Redirecionar assets relativos para o caminho absoluto
 RewriteRule ^assets/(.*)$ /opendelivery-api-schema-validator2/assets/$1 [L]
 
 # Para SPAs React - todas as rotas que não são arquivos devem ir para index.html
