@@ -31,46 +31,101 @@ Route::get('opendelivery-api-schema-validator2/{path?}', function ($path = null)
 
 // API: Validar payload
 Route::post('opendelivery-api-schema-validator2/api/validate', function (Request $request) {
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Payload validation completed',
-        'schema_version' => $request->input('schema_version', '1.0.0'),
-        'errors' => [],
-        'valid' => true
-    ])->header('Access-Control-Allow-Origin', '*')
-      ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    $backendUrl = env('OPENDELIVERY_BACKEND_URL', 'http://localhost:3001');
+    $url = $backendUrl . '/api/validate';
+    
+    $client = new \GuzzleHttp\Client();
+    
+    try {
+        $response = $client->request('POST', $url, [
+            'json' => $request->all(),
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ]
+        ]);
+        
+        return response($response->getBody())
+            ->header('Content-Type', 'application/json')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Backend validation service unavailable',
+            'message' => 'Unable to connect to validation backend',
+            'timestamp' => now()->toISOString()
+        ], 503)->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
 });
 
 // API: Verificar compatibilidade
 Route::post('opendelivery-api-schema-validator2/api/compatibility', function (Request $request) {
-    return response()->json([
-        'status' => 'success',
-        'compatibility' => 'high',
-        'from_version' => $request->input('from_version', '1.0.0'),
-        'to_version' => $request->input('to_version', '1.2.0'),
-        'compatibility_score' => 95,
-        'breaking_changes' => [],
-        'recommendations' => [
-            'No breaking changes detected between versions',
-            'All fields are compatible'
-        ]
-    ])->header('Access-Control-Allow-Origin', '*')
-      ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    $backendUrl = env('OPENDELIVERY_BACKEND_URL', 'http://localhost:3001');
+    $url = $backendUrl . '/api/compatibility';
+    
+    $client = new \GuzzleHttp\Client();
+    
+    try {
+        $response = $client->request('POST', $url, [
+            'json' => $request->all(),
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ]
+        ]);
+        
+        return response($response->getBody())
+            ->header('Content-Type', 'application/json')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Backend compatibility service unavailable',
+            'message' => 'Unable to connect to compatibility backend',
+            'timestamp' => now()->toISOString()
+        ], 503)->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
 });
 
 // API: Certificar payload
 Route::post('opendelivery-api-schema-validator2/api/certify', function (Request $request) {
-    return response()->json([
-        'status' => 'success',
-        'certified' => true,
-        'schema_version' => $request->input('schema_version', '1.0.0'),
-        'certificate_id' => 'CERT-' . uniqid(),
-        'issued_at' => now()->toISOString()
-    ])->header('Access-Control-Allow-Origin', '*')
-      ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-      ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    $backendUrl = env('OPENDELIVERY_BACKEND_URL', 'http://localhost:3001');
+    $url = $backendUrl . '/api/certify';
+    
+    $client = new \GuzzleHttp\Client();
+    
+    try {
+        $response = $client->request('POST', $url, [
+            'json' => $request->all(),
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ]
+        ]);
+        
+        return response($response->getBody())
+            ->header('Content-Type', 'application/json')
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Backend certification service unavailable',
+            'message' => 'Unable to connect to certification backend',
+            'timestamp' => now()->toISOString()
+        ], 503)->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    }
 });
 
 // API: Health check
