@@ -111,7 +111,10 @@
 - [x] Configurado para funcionar tanto localmente quanto em produção
 - [x] Corrigido problemas de validação e compatibilidade (payloads de teste)
 - [x] Todos os schemas OpenDelivery mantidos originais e intactos
-- [ ] Aplicar solução final no servidor Laravel
+- [x] Frontend funcionando 100% em produção (URLs, CSP, assets)
+- [x] Identificado problema: Backend não configurado (503 Service Unavailable)
+- [x] Criado BACKEND_SETUP_LARAVEL.md com 3 opções de configuração
+- [ ] Implementar uma das opções de backend no Laravel
 - [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.
