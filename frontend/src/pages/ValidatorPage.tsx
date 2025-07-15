@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Button, Tabs, Tab, Alert, Link } from '@mui/material';
-import Editor from '@monaco-editor/react';
+import MonacoEditor from '../components/MonacoEditor';
 import TestPayloads from '../components/TestPayloads';
 import CompatibilityChecker from '../components/CompatibilityChecker';
 import { validatePayload } from '../api';
@@ -100,16 +100,12 @@ function ValidatorPage() {
           </Box>
 
           <Box sx={{ flexGrow: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-            <Paper sx={{ height: '100%' }}>
-              <Editor
+            <Paper sx={{ height: '100%', p: 1 }}>
+              <MonacoEditor
                 height="100%"
-                defaultLanguage="json"
+                language="json"
                 value={code}
                 onChange={(value) => setCode(value || '')}
-                options={{
-                  minimap: { enabled: false },
-                  fontSize: 14,
-                }}
               />
             </Paper>
 

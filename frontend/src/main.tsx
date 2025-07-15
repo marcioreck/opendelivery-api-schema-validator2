@@ -5,6 +5,9 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import App from './App';
 import theme from './theme';
 
+// Configure Monaco Editor before rendering
+import './utils/monacoConfig';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>

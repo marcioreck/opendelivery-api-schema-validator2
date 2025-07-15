@@ -38,11 +38,45 @@ app.use('/api/compatibility', compatibilityController_1.compatibilityRouter);
 app.use('/api/certify', certifyController_1.certifyRouter);
 // Health check endpoint
 app.get('/api/health', (_, res) => {
-    res.json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        service: 'OpenDelivery API Schema Validator 2'
-    });
+    try {
+        const uptime = process.uptime();
+        const memoryUsage = process.memoryUsage();
+        const healthData = {
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            service: 'OpenDelivery API Schema Validator 2',
+            version: '2.0.0',
+            environment: process.env.NODE_ENV || 'development',
+            uptime: {
+                seconds: Math.floor(uptime),
+                human: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`
+            },
+            memory: {
+                used: Math.round(memoryUsage.heapUsed / 1024 / 1024) + ' MB',
+                total: Math.round(memoryUsage.heapTotal / 1024 / 1024) + ' MB',
+                external: Math.round(memoryUsage.external / 1024 / 1024) + ' MB'
+            },
+            schemas: {
+                available: ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'],
+                count: 11
+            },
+            endpoints: {
+                validate: '/api/validate',
+                compatibility: '/api/compatibility',
+                certify: '/api/certify',
+                health: '/api/health'
+            }
+        };
+        res.status(200).json(healthData);
+    }
+    catch (error) {
+        res.status(503).json({
+            status: 'unhealthy',
+            timestamp: new Date().toISOString(),
+            service: 'OpenDelivery API Schema Validator 2',
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
 });
 // Error handling
 app.use(errorHandler_1.errorHandler);

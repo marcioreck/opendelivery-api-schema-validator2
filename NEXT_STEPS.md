@@ -20,20 +20,26 @@
 ./deploy.sh
 ```
 
-### 3. Preparar Release
+### 3. Preparar Release (ANTES do push final)
 ```bash
-# Executar script de preparação de release
+# IMPORTANTE: Execute ANTES do push final
+# O script verifica se não há mudanças não commitadas
 ./prepare-release.sh
 ```
+**Este script irá:**
+- Verificar se você está na branch `main`
+- Verificar se não há mudanças não commitadas
+- Executar todos os testes (backend + frontend)
+- Fazer build completo
+- Criar a tag `v2.0.0`
+- Criar arquivo `release-info.txt` com informações do release
 
-### 4. Fazer Push e Release no GitHub
+### 4. Push Final e Release no GitHub
 ```bash
-# Push do código
-git add .
-git commit -m "feat: Finalize project setup and release preparation"
+# Depois do prepare-release.sh, faça o push final
 git push origin main
 
-# Push da tag (será criada pelo prepare-release.sh)
+# Push da tag criada pelo script
 git push origin v2.0.0
 ```
 
@@ -41,8 +47,26 @@ git push origin v2.0.0
 1. Acesse: https://github.com/marcioreck/opendelivery-api-schema-validator2/releases/new
 2. Selecione a tag: `v2.0.0`
 3. Título: `OpenDelivery API Schema Validator 2 - v2.0.0`
-4. Descrição: Use o conteúdo de `release-info.txt` (será criado pelo prepare-release.sh)
+4. Descrição: Use o conteúdo de `release-info.txt` (criado pelo prepare-release.sh)
 5. Publique o release
+
+## 💡 **Ordem Recomendada Agora:**
+
+1. **Commits intermediários** (pode fazer quantos quiser):
+   ```bash
+   git add .
+   git commit -m "fix: Resolve test coverage issues"
+   git push origin main
+   ```
+
+2. **Quando pronto para release**:
+   ```bash
+   ./prepare-release.sh  # ANTES do push final
+   git push origin main
+   git push origin v2.0.0
+   ```
+
+3. **Criar release no GitHub** usando `release-info.txt`
 
 ### 6. Configurar Secrets no GitHub (para deploy automático)
 No GitHub, vá em Settings > Secrets and variables > Actions e adicione:

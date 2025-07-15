@@ -74,5 +74,19 @@
 - [x] Preparadas instruções para release no GitHub
 
 [ ] Fazer funcionar on-line da mesma forma que o validador do Open Delivery em https://programmersit.github.io/opendelivery-api-schema-validator/ mas com o endereço https://fazmercado.com/public/opendelivery-api-schema-validator2/ onde temos um Framework Laravel que pode acomodar uma rota web para o validador em sua subpasta public/opendelivery-api-schema-validator2/
+- [x] Corrigidos problemas de CSP (Content Security Policy) do Laravel
+- [x] Corrigidos erros 404 dos arquivos CSS/JS (assets)
+- [x] Adicionado .htaccess para servir arquivos estáticos corretamente
+- [x] Corrigido problema do favicon.svg
+- [x] Melhorado index.html com fallbacks e loading spinner
+- [x] Atualizada documentação DEPLOY_LARAVEL.md com troubleshooting
+- [x] Corrigido problema do Monaco Editor com CSP restritivo
+- [x] Criado componente MonacoEditor com fallback para textarea
+- [x] Configurado Vite para incluir Monaco Editor localmente
+- [x] Atualizado CSP para permitir workers e blobs do Monaco
+- [x] Melhorado endpoint /health com informações detalhadas
+- [x] Criada documentação completa do health check
+- [x] Adicionado teste para o endpoint /health
+- [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.

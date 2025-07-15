@@ -63,6 +63,10 @@ mkdir -p deploy/public/opendelivery-api-schema-validator2/api
 echo "📋 Copiando arquivos do frontend..."
 cp -r frontend/dist/* deploy/public/opendelivery-api-schema-validator2/
 
+# Copiar .htaccess do frontend
+echo "📋 Copiando .htaccess..."
+cp frontend/public/.htaccess deploy/public/opendelivery-api-schema-validator2/
+
 # Copiar arquivos do backend para subdiretório /api
 echo "📋 Copiando arquivos do backend para /api..."
 cp -r backend/dist/* deploy/public/opendelivery-api-schema-validator2/api/

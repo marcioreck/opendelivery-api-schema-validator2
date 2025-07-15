@@ -14,6 +14,67 @@ O **OpenDelivery** é um padrão de API REST que estabelece um protocolo único 
 
 ## Endpoints
 
+### Health Check
+
+#### GET /health
+Verifica o status de saúde da API e retorna informações sobre o serviço.
+
+##### Requisição
+```bash
+GET /api/health
+```
+
+##### Resposta de Sucesso (200 OK)
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-07-15T10:30:00.000Z",
+  "service": "OpenDelivery API Schema Validator 2",
+  "version": "2.0.0",
+  "environment": "production",
+  "uptime": {
+    "seconds": 3600,
+    "human": "1h 0m 0s"
+  },
+  "memory": {
+    "used": "45 MB",
+    "total": "67 MB",
+    "external": "12 MB"
+  },
+  "schemas": {
+    "available": ["1.0.0", "1.0.1", "1.1.0", "1.1.1", "1.2.0", "1.2.1", "1.3.0", "1.4.0", "1.5.0", "1.6.0-rc", "beta"],
+    "count": 11
+  },
+  "endpoints": {
+    "validate": "/api/validate",
+    "compatibility": "/api/compatibility",
+    "certify": "/api/certify",
+    "health": "/api/health"
+  }
+}
+```
+
+##### Resposta de Erro (503 Service Unavailable)
+```json
+{
+  "status": "unhealthy",
+  "timestamp": "2025-07-15T10:30:00.000Z",
+  "service": "OpenDelivery API Schema Validator 2",
+  "error": "Service unavailable"
+}
+```
+
+##### Códigos de Status
+- **200 OK**: Serviço funcionando normalmente
+- **503 Service Unavailable**: Serviço com problemas
+
+##### Uso
+Este endpoint é útil para:
+- Monitoramento de saúde da aplicação
+- Verificação de disponibilidade do serviço
+- Debugging e troubleshooting
+- Load balancers e health checks automatizados
+
 ### Validação de Esquema
 
 #### POST /validate
