@@ -34,25 +34,62 @@ O projeto foi configurado para funcionar perfeitamente com a estrutura do Larave
 No arquivo `routes/web.php` do Laravel, configure:
 
 ```php
-Route::get('/opendelivery-api-schema-validator2/{any?}', function () {
-    return view('opendelivery-validator');
-})->where('any', '.*');
+// Rota principal - redireciona para a pasta public
+Route::get('/opendelivery-api-schema-validator2', function () {
+    return redirect('/public/opendelivery-api-schema-validator2/');
+})->name('opendelivery-api-schema-validator2');
+
+// Rotas da API - proxy para o backend Express
+Route::prefix('opendelivery-api-schema-validator2/api')->group(function () {
+    Route::get('health', function () {
+        return response()->json([
+            'status' => 'healthy',
+            'timestamp' => now()->toISOString(),
+            'service' => 'OpenDelivery API Schema Validator 2',
+            'version' => '2.0.0',
+            'environment' => 'production',
+            'note' => 'Static API response - backend not required for basic health check'
+        ]);
+    });
+    
+    // Outras rotas da API (se backend estiver disponível)
+    Route::any('{path}', function ($path) {
+        // Proxy para o backend Express se estiver rodando
+        $backendUrl = 'http://localhost:3001/api/' . $path;
+        
+        try {
+            $response = Http::timeout(10)->get($backendUrl, request()->all());
+            return response($response->body(), $response->status())
+                ->header('Content-Type', $response->header('Content-Type'));
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Backend API not available',
+                'message' => 'The backend service is not running or not accessible',
+                'timestamp' => now()->toISOString()
+            ], 503);
+        }
+    })->where('path', '.*');
+});
 ```
 
-E crie uma view que serve o `index.html` da aplicação:
-
+**Alternativa mais simples (sem backend)**:
 ```php
-// resources/views/opendelivery-validator.blade.php
-<!DOCTYPE html>
-<html>
-<head>
-    <title>OpenDelivery API Schema Validator 2</title>
-    <base href="/opendelivery-api-schema-validator2/">
-</head>
-<body>
-    {!! file_get_contents(public_path('opendelivery-api-schema-validator2/index.html')) !!}
-</body>
-</html>
+// Apenas a rota principal
+Route::get('/opendelivery-api-schema-validator2', function () {
+    return redirect('/public/opendelivery-api-schema-validator2/');
+})->name('opendelivery-api-schema-validator2');
+
+// Health check simples
+Route::get('/opendelivery-api-schema-validator2/api/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toISOString(),
+        'service' => 'OpenDelivery API Schema Validator 2',
+        'version' => '2.0.0',
+        'environment' => 'production',
+        'mode' => 'frontend-only'
+    ]);
+});
 ```
 
 ### Processo de Deploy
@@ -97,13 +134,25 @@ O backend Express está configurado para:
 
 #### Testando o Health Check
 
-O endpoint `/api/health` retorna informações detalhadas sobre o status do serviço:
+O endpoint `/api/health` retorna informações sobre o status do serviço:
 
 ```bash
 curl https://fazmercado.com/opendelivery-api-schema-validator2/api/health
 ```
 
 **Resposta esperada (200 OK)**:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-07-15T10:30:00.000Z",
+  "service": "OpenDelivery API Schema Validator 2",
+  "version": "2.0.0",
+  "environment": "production",
+  "mode": "frontend-only"
+}
+```
+
+**Se o backend Express estiver rodando**:
 ```json
 {
   "status": "healthy",
@@ -135,11 +184,10 @@ curl https://fazmercado.com/opendelivery-api-schema-validator2/api/health
 
 **Interpretação da Resposta**:
 - `status: "healthy"` = Serviço funcionando normalmente
-- `status: "unhealthy"` = Serviço com problemas
-- `uptime` = Tempo que o serviço está rodando
-- `memory` = Uso de memória do processo
-- `schemas.count` = Quantidade de esquemas disponíveis
-- `endpoints` = Lista de endpoints disponíveis
+- `mode: "frontend-only"` = Apenas frontend, sem backend
+- `uptime` = Tempo que o serviço está rodando (apenas com backend)
+- `memory` = Uso de memória do processo (apenas com backend)
+- `schemas.count` = Quantidade de esquemas disponíveis (apenas com backend)
 
 ### Logs e Monitoramento
 
@@ -149,7 +197,49 @@ curl https://fazmercado.com/opendelivery-api-schema-validator2/api/health
 
 ### Resolução de Problemas Comuns
 
-#### 1. Erro 404 nos arquivos CSS/JS (assets)
+#### 1. Erro 404 na rota `/api/health`
+
+**Problema**: `https://fazmercado.com/opendelivery-api-schema-validator2/api/health` retorna 404
+
+**Causa**: A rota da API não está configurada no Laravel
+
+**Solução**: Adicione as rotas da API no arquivo `routes/web.php`:
+
+```php
+// Health check básico
+Route::get('/opendelivery-api-schema-validator2/api/health', function () {
+    return response()->json([
+        'status' => 'healthy',
+        'timestamp' => now()->toISOString(),
+        'service' => 'OpenDelivery API Schema Validator 2',
+        'version' => '2.0.0',
+        'environment' => 'production',
+        'mode' => 'frontend-only'
+    ]);
+});
+
+// Outras rotas da API (opcional)
+Route::prefix('opendelivery-api-schema-validator2/api')->group(function () {
+    Route::get('validate', function () {
+        return response()->json(['error' => 'Backend not configured'], 503);
+    });
+    
+    Route::get('compatibility', function () {
+        return response()->json(['error' => 'Backend not configured'], 503);
+    });
+    
+    Route::get('certify', function () {
+        return response()->json(['error' => 'Backend not configured'], 503);
+    });
+});
+```
+
+**Teste**: Após adicionar as rotas, teste novamente:
+```bash
+curl https://fazmercado.com/opendelivery-api-schema-validator2/api/health
+```
+
+#### 2. Erro 404 nos arquivos CSS/JS (assets)
 
 Se os arquivos `vendor-*.js`, `ui-*.js`, `index-*.js` retornarem 404:
 
@@ -181,7 +271,7 @@ Route::get('/opendelivery-api-schema-validator2/assets/{file}', function ($file)
 })->where('file', '.*');
 ```
 
-#### 2. Content Security Policy (CSP)
+#### 3. Content Security Policy (CSP)
 
 Se aparecer erro de CSP bloqueando fontes ou scripts:
 
@@ -196,7 +286,7 @@ Se aparecer erro de CSP bloqueando fontes ou scripts:
 ">
 ```
 
-#### 3. Erro 404 no favicon.svg
+#### 4. Erro 404 no favicon.svg
 
 **Solução**: Verificar se o arquivo existe em:
 ```
@@ -205,7 +295,7 @@ public/opendelivery-api-schema-validator2/favicon.svg
 
 Se não existir, copiar de `frontend/public/favicon.svg`
 
-#### 4. API não responde
+#### 5. API não responde
 
 **Verificar**:
 1. Backend rodando: `ps aux | grep node`

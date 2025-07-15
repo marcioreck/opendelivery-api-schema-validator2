@@ -97,6 +97,10 @@
 - [x] Criado script deploy-production.sh para automatizar deploy
 - [x] Atualizado .htaccess para servir assets corretamente
 - [x] Atualizado CSP para permitir scripts externos necessários
+- [x] Identificado problema da API 404 e criado solução
+- [x] Criado laravel-routes.php com rotas prontas para Laravel
+- [x] Criado test-routes.sh para testar funcionamento completo
+- [x] Atualizado DEPLOY_LARAVEL.md com configuração de rotas API
 - [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.
