@@ -106,6 +106,11 @@
 - [x] Criado FIX_ASSETS_404.md com solução definitiva
 - [x] Atualizado CSP para incluir domínio fazmercado.com
 - [x] Rebuild do frontend com CSP corrigido
+- [x] Corrigido problema de API endpoints duplicados (/api/api/ → /api/)
+- [x] Implementado detecção automática de ambiente (dev/prod)
+- [x] Configurado para funcionar tanto localmente quanto em produção
+- [x] Corrigido problemas de validação e compatibilidade (payloads de teste)
+- [x] Todos os schemas OpenDelivery mantidos originais e intactos
 - [ ] Aplicar solução final no servidor Laravel
 - [ ] Testar funcionamento completo no servidor de produção
 
