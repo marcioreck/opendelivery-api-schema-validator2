@@ -101,6 +101,12 @@
 - [x] Criado laravel-routes.php com rotas prontas para Laravel
 - [x] Criado test-routes.sh para testar funcionamento completo
 - [x] Atualizado DEPLOY_LARAVEL.md com configuração de rotas API
+- [x] Identificado problema final: assets 404 mesmo com script passando
+- [x] Criado rotas Laravel para servir assets diretamente
+- [x] Criado FIX_ASSETS_404.md com solução definitiva
+- [x] Atualizado CSP para incluir domínio fazmercado.com
+- [x] Rebuild do frontend com CSP corrigido
+- [ ] Aplicar solução final no servidor Laravel
 - [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.

@@ -1,8 +1,15 @@
-<?php
+# CORREÇÃO URGENTE - 404 nos Assets
 
-// Rotas para OpenDelivery API Schema Validator 2
-// Adicione estas rotas no arquivo routes/web.php do Laravel
+## Problema
+Os assets estão sendo buscados em `/opendelivery-api-schema-validator2/assets/` mas estão fisicamente em `/public/opendelivery-api-schema-validator2/assets/`.
 
+## Solução Rápida
+
+### 1. Atualize o arquivo `routes/web.php` do Laravel
+
+**Substitua todo o conteúdo relacionado ao OpenDelivery por:**
+
+```php
 // Rota principal - redireciona para a pasta public
 Route::get('/opendelivery-api-schema-validator2', function () {
     return redirect('/public/opendelivery-api-schema-validator2/');
@@ -151,42 +158,55 @@ Route::prefix('opendelivery-api-schema-validator2/api')->group(function () {
         ], 404);
     })->where('path', '.*');
 });
+```
 
-// Opcional: Middleware para CORS se necessário
-Route::middleware(['web'])->group(function () {
-    // As rotas acima já estão no grupo web por padrão
-});
+### 2. Copie o novo build para o servidor
 
-/* 
-INSTRUÇÕES DE USO:
+```bash
+# Copie o conteúdo de frontend/dist/* para:
+# /var/www/html/public/opendelivery-api-schema-validator2/
+```
 
-1. Copie este conteúdo para o arquivo routes/web.php do Laravel
-2. Teste o health check: curl https://fazmercado.com/opendelivery-api-schema-validator2/api/health
-3. Acesse a aplicação: https://fazmercado.com/opendelivery-api-schema-validator2
+### 3. Teste
 
-CONFIGURAÇÃO ADICIONAL OPCIONAL:
+**Abra o navegador e acesse:**
+- https://fazmercado.com/opendelivery-api-schema-validator2
 
-Se quiser proxy para um backend Express real:
+**Os assets devem agora carregar corretamente:**
+- ✅ `/opendelivery-api-schema-validator2/assets/index-BDcncAON.js`
+- ✅ `/opendelivery-api-schema-validator2/assets/ui-D4YkUuFg.js`
+- ✅ `/opendelivery-api-schema-validator2/assets/monaco-CkAvZSel.css`
+- ✅ `/opendelivery-api-schema-validator2/assets/vendor-D9s9tBNk.js`
+- ✅ `/opendelivery-api-schema-validator2/assets/monaco-CRHfge2T.js`
 
-use Illuminate\Support\Facades\Http;
+## Como Funciona
 
-Route::prefix('opendelivery-api-schema-validator2/api')->group(function () {
-    Route::any('{path}', function ($path) {
-        $backendUrl = 'http://localhost:3001/api/' . $path;
-        
-        try {
-            $method = strtolower(request()->method());
-            $response = Http::timeout(30)->$method($backendUrl, request()->all());
-            
-            return response($response->body(), $response->status())
-                ->header('Content-Type', $response->header('Content-Type'));
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Backend service unavailable',
-                'message' => $e->getMessage(),
-                'timestamp' => now()->toISOString()
-            ], 503);
-        }
-    })->where('path', '.*');
-});
-*/
+1. **Rota principal**: `/opendelivery-api-schema-validator2` → redireciona para `/public/opendelivery-api-schema-validator2/`
+2. **Rotas de assets**: `/opendelivery-api-schema-validator2/assets/{file}` → serve arquivo de `public/opendelivery-api-schema-validator2/assets/{file}`
+3. **Favicon**: `/opendelivery-api-schema-validator2/favicon.svg` → serve `public/opendelivery-api-schema-validator2/favicon.svg`
+4. **SPA routing**: `/opendelivery-api-schema-validator2/{path}` → serve sempre o `index.html`
+5. **API**: `/opendelivery-api-schema-validator2/api/*` → responde com dados mock
+
+## Resultado Esperado
+
+- ✅ Aplicação carrega sem erros 404
+- ✅ Assets CSS/JS carregam corretamente
+- ✅ Favicon carrega corretamente
+- ✅ API health retorna 200
+- ✅ Navegação React funciona
+- ⚠️ Script externo wsimg.com pode ainda dar aviso de CSP (mas não afeta funcionamento)
+
+## Verificação
+
+Execute o teste automatizado:
+```bash
+./test-routes.sh
+```
+
+Ou teste manualmente:
+```bash
+curl -I https://fazmercado.com/opendelivery-api-schema-validator2/assets/index-BDcncAON.js
+curl -I https://fazmercado.com/opendelivery-api-schema-validator2/api/health
+```
+
+Ambos devem retornar 200 OK.
