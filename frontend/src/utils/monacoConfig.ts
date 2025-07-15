@@ -1,11 +1,36 @@
-import { loader } from '@monaco-editor/react';
+// Configuração simplificada do Monaco Editor
+// Removida dependência externa do CDN
 
-// Configure Monaco Editor to use local files instead of CDN
-loader.config({
-  // Use local monaco-editor files
-  paths: {
-    vs: '/node_modules/monaco-editor/min/vs'
+export const monacoConfig = {
+  // Configuração local sem CDN
+  local: true,
+  
+  // Configurações básicas para funcionar offline
+  theme: 'vs-dark',
+  language: 'json',
+  options: {
+    minimap: { enabled: false },
+    fontSize: 14,
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    wordWrap: 'on',
+    lineNumbers: 'on',
+    folding: true,
+    contextmenu: false,
+    quickSuggestions: false,
+    parameterHints: { enabled: false },
+    suggestOnTriggerCharacters: false,
+    acceptSuggestionOnEnter: 'off',
+    tabCompletion: 'off',
+    wordBasedSuggestions: false,
+    occurrencesHighlight: false,
+    codeLens: false,
+    hover: { enabled: false },
+    links: false,
+    colorDecorators: false,
+    lightbulb: { enabled: false },
+    snippetSuggestions: 'none'
   }
-});
+};
 
-export default loader;
+export default monacoConfig;

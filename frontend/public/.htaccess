@@ -1,20 +1,51 @@
 RewriteEngine On
 RewriteBase /opendelivery-api-schema-validator2/
 
-# Servir arquivos estáticos diretamente (CSS, JS, imagens, fontes)
+# Forçar HTTPS (opcional, descomente se necessário)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Servir arquivos estáticos diretamente com headers apropriados
+<FilesMatch "\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
+    # Permitir acesso direto aos arquivos
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "public, max-age=31536000, immutable"
+    
+    # Garantir que o arquivo existe
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^.*$ - [L]
+</FilesMatch>
+
+# Servir arquivos estáticos diretamente se existirem
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^.*$ - [L]
+
+# Servir arquivos do diretório assets se existirem
+RewriteCond %{REQUEST_URI} ^/opendelivery-api-schema-validator2/assets/
+RewriteCond %{DOCUMENT_ROOT}/opendelivery-api-schema-validator2%{REQUEST_URI} -f
+RewriteRule ^.*$ - [L]
+
+# Redirecionar requisições de assets para o caminho correto
+RewriteRule ^assets/(.*)$ /opendelivery-api-schema-validator2/assets/$1 [L]
 
 # Para SPAs React - todas as rotas que não são arquivos devem ir para index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/opendelivery-api-schema-validator2/api/
 RewriteRule ^.*$ /opendelivery-api-schema-validator2/index.html [L]
 
-# Headers para melhor performance
+# Headers para melhor performance e segurança
 <IfModule mod_headers.c>
+    # Headers de segurança
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
     # Cache para arquivos estáticos
     <FilesMatch "\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$">
-        Header set Cache-Control "public, max-age=31536000"
+        Header set Cache-Control "public, max-age=31536000, immutable"
+        Header set Expires "max"
     </FilesMatch>
     
     # Sem cache para HTML
@@ -36,9 +67,19 @@ RewriteRule ^.*$ /opendelivery-api-schema-validator2/index.html [L]
     AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE application/javascript
     AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
 </IfModule>
 
-# Tipos MIME
-AddType application/javascript .js
-AddType text/css .css
-AddType image/svg+xml .svg
+# Tipos MIME corretos
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType image/svg+xml .svg
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType font/ttf .ttf
+    AddType font/eot .eot
+</IfModule>
+
+# Páginas de erro personalizadas
+ErrorDocument 404 /opendelivery-api-schema-validator2/index.html

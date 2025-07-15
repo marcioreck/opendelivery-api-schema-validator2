@@ -22,7 +22,7 @@ import {
   Error as ErrorIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
-import Editor from '@monaco-editor/react';
+import MonacoEditor from '../components/MonacoEditor';
 import { certifyPayload } from '../api';
 
 const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
@@ -116,9 +116,9 @@ function CertificationPage() {
         </Box>
 
         <Box sx={{ height: 400, border: '1px solid #ddd', borderRadius: 1 }}>
-          <Editor
-            height="100%"
-            defaultLanguage="json"
+          <MonacoEditor
+            height="400px"
+            language="json"
             value={code}
             onChange={(value) => setCode(value || '')}
             options={{

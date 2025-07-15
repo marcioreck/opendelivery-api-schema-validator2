@@ -20,7 +20,7 @@ import {
   Divider,
   Grid,
 } from '@mui/material';
-import Editor from '@monaco-editor/react';
+import MonacoEditor from '../components/MonacoEditor';
 import { checkCompatibility } from '../api';
 import TestPayloads from '../components/TestPayloads';
 
@@ -253,8 +253,8 @@ export default function CompatibilityPage() {
             </Typography>
             
             <Box sx={{ height: 400, border: '1px solid #ddd', borderRadius: 1 }}>
-              <Editor
-                height="100%"
+              <MonacoEditor
+                height="400px"
                 language="json"
                 value={payload}
                 onChange={(value) => setPayload(value || '')}

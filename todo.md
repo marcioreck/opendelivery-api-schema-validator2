@@ -87,6 +87,10 @@
 - [x] Melhorado endpoint /health com informações detalhadas
 - [x] Criada documentação completa do health check
 - [x] Adicionado teste para o endpoint /health
+- [x] Corrigido erro de compilação do MonacoEditor component
+- [x] Removida prop onError inexistente do Monaco Editor
+- [x] Implementado timeout fallback para Monaco Editor
+- [x] Todos os testes passando (18/18)
 - [ ] Testar funcionamento completo no servidor de produção
 
 [ ] Limpar a documentação e remover itens que não são mais necessários ou trachos que não são seguros de estarem expostos publicamente no repositório do github sem perder as funcionalidades alcançadas.
