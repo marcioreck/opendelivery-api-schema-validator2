@@ -42,6 +42,13 @@ class ValidateController extends Controller
         $toVersion = $request->input('to_version');
 
         try {
+            if (!$fromVersion || !$toVersion) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Both from_version and to_version parameters are required'
+                ], 400);
+            }
+
             $result = $this->validationService->checkCompatibility($fromVersion, $toVersion, $payload);
             
             return response()->json([

@@ -27,13 +27,13 @@ sudo mysql -u root -p -e "FLUSH PRIVILEGES;"
 
 ### Servidores de Desenvolvimento
 ```bash
-# Laravel 10.x (compatibilidade produção) - PORTA 8010
+# Laravel 10.x (compatibilidade produção)
 cd laravel-test-app
-php artisan serve --port=8010
+php artisan serve --host=0.0.0.0 --port=8001
 
-# Laravel 12.x (desenvolvimento) - PORTA 8012
+# Laravel 12.x (desenvolvimento)
 cd laravel-12-test-app
-php artisan serve --port=8012
+php artisan serve --host=0.0.0.0 --port=8001
 
 # Frontend standalone
 cd frontend
@@ -41,29 +41,13 @@ npm run dev  # porta 8000
 ```
 
 ### Endpoints Funcionais
-- **Laravel 10.x:** http://localhost:8010/opendelivery/
-- **Laravel 12.x:** http://localhost:8012/opendelivery/
+- **Laravel 10.x:** http://localhost:8001/opendelivery/
+- **Laravel 12.x:** http://localhost:8001/opendelivery/
 - **Frontend:** http://localhost:8000/
 
 **Endpoints disponíveis:**
 - Health: /opendelivery/health
 - Dashboard: /opendelivery/dashboard
-- Validate: /opendelivery/validate (POST)
-- Compatibility: /opendelivery/compatibility (POST)
-- Certify: /opendelivery/certify (POST)
-
-### Teste com curl
-```bash
-# Validação Laravel v10
-curl -X POST http://localhost:8010/opendelivery/validate \
-  -H "Content-Type: application/json" \
-  -d '{"payload": {"order": {"id": "ORD-12345"}}, "schema_version": "1.5.0"}'
-
-# Validação Laravel v12
-curl -X POST http://localhost:8012/opendelivery/validate \
-  -H "Content-Type: application/json" \
-  -d '{"payload": {"order": {"id": "ORD-12345"}}, "schema_version": "1.5.0"}'
-```
 - Validate: POST /opendelivery/validate
 - Compatibility: POST /opendelivery/compatibility
 - Certify: POST /opendelivery/certify

@@ -13,7 +13,7 @@ class SchemaManager
 
     public function __construct()
     {
-        $this->schemasPath = __DIR__ . '/../schemas';
+        $this->schemasPath = __DIR__ . '/../../schemas';
     }
 
     /**
