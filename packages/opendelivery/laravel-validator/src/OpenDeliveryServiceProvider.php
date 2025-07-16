@@ -40,8 +40,14 @@ class OpenDeliveryServiceProvider extends ServiceProvider
         );
 
         // Register services
+        $this->app->singleton('opendelivery.schema-manager', function ($app) {
+            return new \OpenDelivery\LaravelValidator\Services\SchemaManager();
+        });
+
         $this->app->singleton('opendelivery.validator', function ($app) {
-            return new \OpenDelivery\LaravelValidator\Services\ValidationService();
+            return new \OpenDelivery\LaravelValidator\Services\ValidationService(
+                $app->make('opendelivery.schema-manager')
+            );
         });
     }
 }
