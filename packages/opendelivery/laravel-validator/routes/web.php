@@ -12,12 +12,46 @@ Route::prefix('opendelivery')->group(function () {
         return view('opendelivery::dashboard');
     })->name('opendelivery.dashboard');
     
+    Route::get('/react', function () {
+        return view('opendelivery::react-dashboard');
+    })->name('opendelivery.react');
+    
     Route::get('/health', function () {
         return response()->json([
             'status' => 'healthy',
             'service' => 'OpenDelivery Laravel Validator',
-            'version' => '1.0.0',
+            'version' => '2.0.0',
             'timestamp' => now()->toISOString()
         ]);
     })->name('opendelivery.health');
+    
+    // API route to get schema versions
+    Route::get('/schemas', function () {
+        return response()->json([
+            [
+                'version' => '1.6.0',
+                'name' => 'Latest Stable',
+                'description' => 'Current stable version',
+                'releaseDate' => '2024-01-15',
+                'status' => 'stable',
+                'isDefault' => true
+            ],
+            [
+                'version' => '1.5.0',
+                'name' => 'Previous Stable',
+                'description' => 'Previous stable version',
+                'releaseDate' => '2023-12-01',
+                'status' => 'stable',
+                'isDefault' => false
+            ],
+            [
+                'version' => '1.6.0-rc',
+                'name' => 'Release Candidate',
+                'description' => 'Pre-release version',
+                'releaseDate' => '2024-01-01',
+                'status' => 'beta',
+                'isDefault' => false
+            ],
+        ]);
+    })->name('opendelivery.schemas');
 });

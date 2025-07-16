@@ -52,6 +52,108 @@
         }
         .endpoints li {
             background: #f8f9fa;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .endpoints code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .frontend-options {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        .frontend-options h3 {
+            color: #495057;
+            margin-top: 0;
+        }
+        .option-button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 10px 10px 0;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        .option-button:hover {
+            background: #0056b3;
+            color: white;
+            text-decoration: none;
+        }
+        .option-button.secondary {
+            background: #6c757d;
+        }
+        .option-button.secondary:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 OpenDelivery Validator Dashboard</h1>
+        
+        <div class="status">
+            <strong>✅ Status:</strong> Laravel Package is operational and ready!
+        </div>
+        
+        <div class="info">
+            <strong>📦 Package Version:</strong> 2.0.0<br>
+            <strong>🔧 Laravel Version:</strong> {{ app()->version() }}<br>
+            <strong>📅 Current Time:</strong> {{ now()->format('Y-m-d H:i:s') }}
+        </div>
+
+        <div class="frontend-options">
+            <h3>🎨 Frontend Interface Options</h3>
+            <p>Choose your preferred interface for the OpenDelivery Validator:</p>
+            
+            <a href="{{ url('/opendelivery/react') }}" class="option-button">
+                ⚛️ React Dashboard (Full Interactive UI)
+            </a>
+            
+            <a href="{{ url('/opendelivery/dashboard') }}" class="option-button secondary">
+                📄 Simple Dashboard (Current Page)
+            </a>
+            
+            <div style="margin-top: 15px;">
+                <small><strong>Recommended:</strong> Use the React Dashboard for the best user experience with interactive validation, real-time feedback, and modern UI components.</small>
+            </div>
+        </div>
+
+        <div class="endpoints">
+            <h3>📡 Available API Endpoints</h3>
+            <ul>
+                <li>
+                    <strong>Health Check:</strong> <code>GET /opendelivery/health</code><br>
+                    <small>Check if the validation service is running</small>
+                </li>
+                <li>
+                    <strong>Validate Payload:</strong> <code>POST /opendelivery/validate</code><br>
+                    <small>Validate JSON payload against OpenDelivery schema</small>
+                </li>
+                <li>
+                    <strong>Check Compatibility:</strong> <code>POST /opendelivery/compatibility</code><br>
+                    <small>Check compatibility between different schema versions</small>
+                </li>
+                <li>
+                    <strong>Certify Implementation:</strong> <code>POST /opendelivery/certify</code><br>
+                    <small>Get OpenDelivery Ready certification for your implementation</small>
+                </li>
+            </ul>
+        </div>
+            padding: 0;
+        }
+        .endpoints li {
+            background: #f8f9fa;
             padding: 10px 15px;
             margin: 5px 0;
             border-radius: 4px;
