@@ -54,6 +54,7 @@ Criar um pacote Laravel completo que integre backend e frontend do OpenDelivery 
 - [ ] Componentes Blade para UI
 - [ ] Assets publishing
 - [ ] Vite integration
+- [ ] Ajustar o nome da ferramenta para "OpenDelivery API Schema Validator 2"
 
 ### **Fase 6: Preparação para Produção** (Importante)
 - [ ] Documentação completa do pacote
