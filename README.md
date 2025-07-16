@@ -127,10 +127,6 @@ A aplicação estará disponível em:
 - **Frontend**: http://localhost:8000
 - **API Backend**: http://localhost:3001
 
-## Demo Online
-
-Uma versão online desta ferramenta está disponível em: **https://fazmercado.com/opendelivery-api-schema-validator2/**
-
 ## Build para Produção
 
 ```bash

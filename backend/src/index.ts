@@ -21,11 +21,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS configuration for production
+// CORS configuration for local development
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://fazmercado.com', 'https://www.fazmercado.com']
-    : ['http://localhost:8000', 'http://127.0.0.1:8000'],
+  origin: ['http://localhost:8000', 'http://127.0.0.1:8000'],
   credentials: true
 };
 
