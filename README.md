@@ -1,5 +1,7 @@
 # OpenDelivery API Schema Validator 2
 
+[![CI/CD](https://github.com/marcioreck/opendelivery-api-schema-validator2/actions/workflows/ci.yml/badge.svg)](https://github.com/marcioreck/opendelivery-api-schema-validator2/actions/workflows/ci.yml)
+
 Uma ferramenta avançada e abrangente para validação, verificação de compatibilidade e certificação de implementações da API OpenDelivery. Este projeto fornece tanto um serviço backend para validação de esquemas quanto uma interface frontend para fácil interação.
 
 ## Sobre o OpenDelivery
