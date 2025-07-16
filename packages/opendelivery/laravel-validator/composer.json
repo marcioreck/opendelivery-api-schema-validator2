@@ -1,0 +1,41 @@
+{
+    "name": "opendelivery/laravel-validator",
+    "description": "OpenDelivery API Schema Validator package for Laravel",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Márcio Reck",
+            "email": "contact@fazmercado.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^12.0",
+        "illuminate/contracts": "^12.0",
+        "justinrainbow/json-schema": "^6.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5",
+        "orchestra/testbench": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "OpenDelivery\\LaravelValidator\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "OpenDelivery\\LaravelValidator\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
