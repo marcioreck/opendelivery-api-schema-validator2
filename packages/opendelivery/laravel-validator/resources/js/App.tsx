@@ -6,6 +6,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { Box, Container } from '@mui/material';
 import Navbar from './components/Navbar';
 import ValidationForm from './components/ValidationForm';
+import CompatibilityPage from './pages/CompatibilityPage';
+import CertificationPage from './pages/CertificationPage';
 import { theme } from './theme';
 import type { ValidationRequest, ValidationResult } from './types';
 
@@ -53,19 +55,9 @@ const App: React.FC = () => {
           />
         );
       case 'compatibility':
-        return (
-          <Box sx={{ p: 3 }}>
-            <h2>Compatibility Checker</h2>
-            <p>Coming soon...</p>
-          </Box>
-        );
+        return <CompatibilityPage />;
       case 'certification':
-        return (
-          <Box sx={{ p: 3 }}>
-            <h2>OpenDelivery Certification</h2>
-            <p>Coming soon...</p>
-          </Box>
-        );
+        return <CertificationPage />;
       default:
         return (
           <ValidationForm

@@ -38,7 +38,7 @@ opendelivery-api-schema-validator2/
 │   │   │   ├── CompatibilityService.ts
 │   │   │   ├── CertificationService.ts
 │   │   │   ├── SchemaManager.ts
-│   │   │   └── ValidationEngine.ts
+│   │   └── ValidationEngine.ts
 │   │   ├── controllers/       # Controladores da API
 │   │   │   ├── validateController.ts
 │   │   │   ├── compatibilityController.ts
@@ -71,6 +71,16 @@ opendelivery-api-schema-validator2/
 │   │   └── types/           # Tipos TypeScript
 │   ├── public/              # Assets estáticos
 │   └── package.json
+├── packages/                  # Laravel Package
+│   └── opendelivery/
+│       └── laravel-validator/
+│           ├── src/          # Código fonte PHP
+│           ├── resources/    # Views, JS, CSS
+│           ├── routes/       # Rotas web
+│           ├── config/       # Configuração
+│           └── composer.json
+├── laravel-test-app/         # Ambiente de teste Laravel 10
+├── laravel-12-test-app/      # Ambiente de teste Laravel 12
 └── docs/                    # Documentação
     ├── SUPPORT.md          # Documentação de suporte
     ├── API.md              # Documentação da API
@@ -128,6 +138,56 @@ npm run dev
 A aplicação estará disponível em:
 - **Frontend**: http://localhost:8000
 - **API Backend**: http://localhost:3001
+
+### Laravel Package URLs:
+- **Laravel 10**: http://localhost:8010/opendelivery-api-schema-validator2
+- **Laravel 12**: http://localhost:8012/opendelivery-api-schema-validator2
+
+## Laravel Package
+
+Este projeto também está disponível como um **pacote Laravel** para fácil integração em projetos Laravel existentes.
+
+### Instalação do Pacote Laravel
+
+```bash
+composer require opendelivery/laravel-validator
+```
+
+### Publicação dos Assets
+
+```bash
+# Publicar assets (JS, CSS, imagens)
+php artisan vendor:publish --provider="OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider" --tag=opendelivery-assets
+
+# Publicar views
+php artisan vendor:publish --provider="OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider" --tag=opendelivery-views
+
+# Publicar configuração
+php artisan vendor:publish --provider="OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider" --tag=opendelivery-config
+```
+
+### Uso
+
+Após a instalação, as seguintes rotas estarão disponíveis:
+
+#### Rotas Principais:
+- **Interface React**: `/opendelivery-api-schema-validator2` (padrão)
+- **Interface React**: `/opendelivery-api-schema-validator2/react`
+- **Dashboard Blade**: `/opendelivery-api-schema-validator2/blade`
+- **Health Check**: `/opendelivery-api-schema-validator2/health`
+- **Documentação de Rotas**: `/opendelivery-api-schema-validator2/routes`
+
+#### API Endpoints:
+- **Validação**: `POST /opendelivery-api-schema-validator2/validate`
+- **Compatibilidade**: `POST /opendelivery-api-schema-validator2/compatibility`
+- **Certificação**: `POST /opendelivery-api-schema-validator2/certify`
+- **Schemas**: `GET /opendelivery-api-schema-validator2/schemas`
+
+### Compatibilidade
+
+- **Laravel 10.x**: ✅ Totalmente compatível
+- **Laravel 12.x**: ✅ Totalmente compatível
+- **PHP 8.2+**: ✅ Recomendado
 
 ## Build para Produção
 

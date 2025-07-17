@@ -12,7 +12,7 @@ import type {
 } from '@/types';
 
 // Base API configuration
-const BASE_URL = '/opendelivery';
+const BASE_URL = '/opendelivery-api-schema-validator2';
 
 // API error handler
 const handleApiError = async (response: Response): Promise<never> => {

@@ -1,12 +1,10 @@
 // OpenDelivery API Schema Validator 2 - Validation Form Component
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
+  Paper,
   Typography,
-  TextField,
   Button,
   Select,
   MenuItem,
@@ -14,7 +12,6 @@ import {
   InputLabel,
   Alert,
   CircularProgress,
-  Chip,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -22,56 +19,58 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  FormControlLabel,
-  Switch,
+  Link,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
   Error as ErrorIcon,
   Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  PlayArrow as PlayArrowIcon,
-  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import MonacoEditor from './MonacoEditor';
-import type { ValidationFormProps, ValidationResult, SchemaVersion } from '@/types';
-import { validatePayload, getSchemaVersions, formatValidationError, getScoreColor } from '@/utils/api';
+import TestPayloads from './TestPayloads';
+import CompatibilityChecker from './CompatibilityChecker';
+import { validatePayload } from '../utils/api';
+
+interface ValidationFormProps {
+  onValidate?: (request: any) => Promise<any>;
+  loading?: boolean;
+  initialPayload?: string;
+  initialVersion?: string;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors?: Array<{
+    property: string;
+    message: string;
+    constraint?: any;
+    value?: any;
+  }>;
+  warnings?: Array<{
+    type: string;
+    message: string;
+    severity: string;
+  }>;
+  score?: number;
+  version?: string;
+}
+
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
 
 const ValidationForm: React.FC<ValidationFormProps> = ({
   onValidate,
   loading = false,
-  initialPayload = '',
-  initialVersion = '',
+  initialPayload = '{}',
+  initialVersion = '1.5.0',
 }) => {
   const [payload, setPayload] = useState(initialPayload);
   const [version, setVersion] = useState(initialVersion);
-  const [strict, setStrict] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [versions, setVersions] = useState<SchemaVersion[]>([]);
+  const [activeTab, setActiveTab] = useState(0);
   const [isValidating, setIsValidating] = useState(false);
-
-  // Load schema versions
-  useEffect(() => {
-    const loadVersions = async () => {
-      try {
-        const schemaVersions = await getSchemaVersions();
-        setVersions(schemaVersions);
-        
-        // Set default version if not provided
-        if (!version) {
-          const defaultVersion = schemaVersions.find(v => v.isDefault);
-          if (defaultVersion) {
-            setVersion(defaultVersion.version);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load schema versions:', err);
-      }
-    };
-    
-    loadVersions();
-  }, [version]);
 
   // Handle validation
   const handleValidation = useCallback(async () => {
@@ -90,23 +89,31 @@ const ValidationForm: React.FC<ValidationFormProps> = ({
     setResult(null);
 
     try {
-      const validationResult = await validatePayload({
-        payload: JSON.parse(payload),
-        version,
-        strict,
-      });
+      let parsedPayload;
+      try {
+        parsedPayload = JSON.parse(payload);
+      } catch (parseError) {
+        setError('Invalid JSON format. Please check your input.');
+        return;
+      }
 
-      setResult(validationResult);
+      const validationResult = await validatePayload(parsedPayload, version);
+      
+      if (validationResult.status === 'success') {
+        setResult(validationResult.data);
+      } else {
+        setError(validationResult.message || 'Validation failed');
+      }
       
       if (onValidate) {
-        onValidate({ payload: JSON.parse(payload), version, strict });
+        await onValidate({ payload: parsedPayload, version });
       }
     } catch (err: any) {
-      setError(formatValidationError(err));
+      setError(err.message || 'An error occurred during validation');
     } finally {
       setIsValidating(false);
     }
-  }, [payload, version, strict, onValidate]);
+  }, [payload, version, onValidate]);
 
   // Handle payload change
   const handlePayloadChange = useCallback((newPayload: string) => {
@@ -115,192 +122,170 @@ const ValidationForm: React.FC<ValidationFormProps> = ({
     setError(null);
   }, []);
 
-  // Clear results
-  const clearResults = useCallback(() => {
+  // Handle payload select from test payloads
+  const handlePayloadSelect = useCallback((selectedPayload: any) => {
+    setPayload(JSON.stringify(selectedPayload, null, 2));
     setResult(null);
     setError(null);
   }, []);
 
-  // Get result color
-  const getResultColor = (valid: boolean, score: number) => {
-    if (valid) {
-      return getScoreColor(score);
-    }
-    return 'error';
-  };
+  // Handle tab change
+  const handleTabChange = useCallback((event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  }, []);
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        JSON Schema Validation
-      </Typography>
+    <Box sx={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          <strong>OpenDelivery API Schema Validator 2</strong> - Ferramenta para validação, compatibilidade e certificação de implementações da API OpenDelivery. 
+          Desenvolvido por{' '}
+          <Link href="https://fazmercado.com" target="_blank" rel="noopener noreferrer" color="primary">
+            Márcio Reck
+          </Link>
+          {' '} | {' '}
+          <Link href="https://github.com/marcioreck/opendelivery-api-schema-validator2" target="_blank" rel="noopener noreferrer" color="primary">
+            GitHub
+          </Link>
+          {' '} | {' '}
+          <Link href="https://www.opendelivery.com.br/" target="_blank" rel="noopener noreferrer" color="primary">
+            OpenDelivery API
+          </Link>
+        </Typography>
+      </Alert>
       
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        Validate your JSON payload against OpenDelivery API Schema Validator 2 specifications
-      </Typography>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tab label="Schema Validator" />
+          <Tab label="Verificador de Compatibilidade" />
+        </Tabs>
+      </Box>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Schema Version</InputLabel>
-              <Select
-                value={version}
-                onChange={(e) => setVersion(e.target.value)}
-                label="Schema Version"
-              >
-                {versions.map((v) => (
-                  <MenuItem key={v.version} value={v.version}>
-                    {v.version} - {v.name}
-                    {v.isDefault && <Chip label="Default" size="small" sx={{ ml: 1 }} />}
-                    {v.status === 'beta' && <Chip label="Beta" size="small" color="warning" sx={{ ml: 1 }} />}
-                    {v.status === 'deprecated' && <Chip label="Deprecated" size="small" color="error" sx={{ ml: 1 }} />}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FormControlLabel
-                control={<Switch checked={strict} onChange={(e) => setStrict(e.target.checked)} />}
-                label="Strict Mode"
-              />
-              
-              <Button
-                variant="contained"
-                startIcon={<PlayArrowIcon />}
+      {activeTab === 0 && (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5">Schema Validator</Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TestPayloads onSelectPayload={handlePayloadSelect} />
+              <FormControl size="small" sx={{ minWidth: 120 }}>
+                <InputLabel>Version</InputLabel>
+                <Select
+                  value={version}
+                  label="Version"
+                  onChange={(e) => setVersion(e.target.value)}
+                >
+                  {SCHEMA_VERSIONS.map((v) => (
+                    <MenuItem key={v} value={v}>{v}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Button 
+                variant="contained" 
                 onClick={handleValidation}
                 disabled={isValidating || loading}
-                sx={{ minWidth: 120 }}
               >
                 {isValidating || loading ? <CircularProgress size={20} /> : 'Validate'}
-              </Button>
-              
-              <Button
-                variant="outlined"
-                startIcon={<RefreshIcon />}
-                onClick={clearResults}
-                disabled={isValidating || loading}
-              >
-                Clear
               </Button>
             </Box>
           </Box>
 
-          <Typography variant="h6" gutterBottom>
-            JSON Payload
-          </Typography>
-          
-          <MonacoEditor
-            value={payload}
-            onChange={handlePayloadChange}
-            language="json"
-            height={400}
-            options={{
-              minimap: { enabled: false },
-              wordWrap: 'on',
-              lineNumbers: 'on',
-              folding: true,
-              formatOnPaste: true,
-              formatOnType: true,
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      {result && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Typography variant="h6">
-                Validation Result
+          <Box sx={{ display: 'flex', gap: 2, flexGrow: 1 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h6" gutterBottom>
+                JSON Payload
               </Typography>
-              
-              <Chip
-                label={result.valid ? 'Valid' : 'Invalid'}
-                color={getResultColor(result.valid, result.score)}
-                icon={result.valid ? <CheckCircleIcon /> : <ErrorIcon />}
-              />
-              
-              <Chip
-                label={`Score: ${result.score}%`}
-                color={getScoreColor(result.score)}
-                variant="outlined"
-              />
-              
-              <Chip
-                label={`Version: ${result.version}`}
-                variant="outlined"
-              />
+              <Paper sx={{ height: '100%', minHeight: 400 }}>
+                <MonacoEditor
+                  value={payload}
+                  onChange={handlePayloadChange}
+                  language="json"
+                  height="100%"
+                />
+              </Paper>
             </Box>
 
-            {result.errors.length > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ErrorIcon color="error" />
-                    Errors ({result.errors.length})
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List>
-                    {result.errors.map((error, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <ErrorIcon color="error" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={error.message}
-                          secondary={`Field: ${error.field} | Code: ${error.code}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            )}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h6" gutterBottom>
+                Validation Results
+              </Typography>
+              <Paper sx={{ height: '100%', minHeight: 400, p: 2 }}>
+                {error && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    <Typography variant="body2">{error}</Typography>
+                  </Alert>
+                )}
 
-            {result.warnings.length > 0 && (
-              <Accordion>
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <WarningIcon color="warning" />
-                    Warnings ({result.warnings.length})
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <List>
-                    {result.warnings.map((warning, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <WarningIcon color="warning" />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={warning.message}
-                          secondary={`Field: ${warning.field} | Code: ${warning.code}`}
-                        />
-                      </ListItem>
-                    ))}
-                  </List>
-                </AccordionDetails>
-              </Accordion>
-            )}
+                {result && (
+                  <Box>
+                    <Alert 
+                      severity={result.valid ? 'success' : 'error'} 
+                      sx={{ mb: 2 }}
+                    >
+                      <Typography variant="body2">
+                        {result.valid ? 'Payload is valid!' : 'Payload is invalid'}
+                        {result.score !== undefined && ` (Score: ${result.score}%)`}
+                      </Typography>
+                    </Alert>
 
-            {result.valid && result.errors.length === 0 && result.warnings.length === 0 && (
-              <Alert severity="success">
-                <Typography variant="body1">
-                  🎉 Perfect! Your JSON payload is fully compliant with OpenDelivery API Schema Validator 2 version {result.version}.
-                </Typography>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
+                    {result.errors && result.errors.length > 0 && (
+                      <Accordion>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="subtitle1">
+                            Errors ({result.errors.length})
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <List>
+                            {result.errors.map((error, index) => (
+                              <ListItem key={index}>
+                                <ListItemIcon>
+                                  <ErrorIcon color="error" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={error.message}
+                                  secondary={error.property}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
+
+                    {result.warnings && result.warnings.length > 0 && (
+                      <Accordion>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                          <Typography variant="subtitle1">
+                            Warnings ({result.warnings.length})
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <List>
+                            {result.warnings.map((warning, index) => (
+                              <ListItem key={index}>
+                                <ListItemIcon>
+                                  <WarningIcon color="warning" />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={warning.message}
+                                  secondary={warning.type}
+                                />
+                              </ListItem>
+                            ))}
+                          </List>
+                        </AccordionDetails>
+                      </Accordion>
+                    )}
+                  </Box>
+                )}
+              </Paper>
+            </Box>
+          </Box>
+        </>
+      )}
+
+      {activeTab === 1 && (
+        <CompatibilityChecker />
       )}
     </Box>
   );

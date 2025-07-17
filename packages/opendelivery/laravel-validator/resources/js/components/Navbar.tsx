@@ -3,7 +3,7 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box, Button, IconButton } from '@mui/material';
 import { 
-  Validation as ValidationIcon, 
+  CheckCircle as ValidationIcon, 
   Compare as CompareIcon, 
   Verified as CertifiedIcon,
   Dashboard as DashboardIcon,

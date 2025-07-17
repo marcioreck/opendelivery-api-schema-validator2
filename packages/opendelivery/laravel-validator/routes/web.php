@@ -3,27 +3,40 @@
 use Illuminate\Support\Facades\Route;
 use OpenDelivery\LaravelValidator\Controllers\ValidateController;
 
-Route::prefix('opendelivery')->group(function () {
+// Main routes with opendelivery-api-schema-validator2 prefix
+Route::prefix('opendelivery-api-schema-validator2')->group(function () {
+    // API Endpoints
     Route::post('/validate', [ValidateController::class, 'validate'])->name('opendelivery.validate');
     Route::post('/compatibility', [ValidateController::class, 'compatibility'])->name('opendelivery.compatibility');
     Route::post('/certify', [ValidateController::class, 'certify'])->name('opendelivery.certify');
     
-    Route::get('/dashboard', function () {
+    // Health Check
+    Route::get('/health', function () {
+        return response()->json([
+            'status' => 'healthy',
+            'service' => 'OpenDelivery API Schema Validator 2',
+            'version' => '2.0.0',
+            'timestamp' => now()->toISOString()
+        ]);
+    })->name('opendelivery.health');
+    
+    // User Interfaces
+    Route::get('/blade', function () {
         return view('opendelivery::dashboard');
-    })->name('opendelivery.dashboard');
+    })->name('opendelivery.blade');
     
     Route::get('/react', function () {
         return view('opendelivery::react-dashboard');
     })->name('opendelivery.react');
     
-    Route::get('/health', function () {
-        return response()->json([
-            'status' => 'healthy',
-            'service' => 'OpenDelivery Laravel Validator',
-            'version' => '2.0.0',
-            'timestamp' => now()->toISOString()
-        ]);
-    })->name('opendelivery.health');
+    Route::get('/routes', function () {
+        return view('opendelivery::routes');
+    })->name('opendelivery.routes');
+    
+    // Default route redirects to React
+    Route::get('/', function () {
+        return view('opendelivery::react-dashboard');
+    })->name('opendelivery.index');
     
     // API route to get schema versions
     Route::get('/schemas', function () {

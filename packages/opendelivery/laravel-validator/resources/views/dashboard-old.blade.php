@@ -100,7 +100,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚀 OpenDelivery API Schema Validator 2</h1>
+        <h1>🚀 OpenDelivery Validator Dashboard</h1>
         
         <div class="status">
             <strong>✅ Status:</strong> Laravel Package is operational and ready!
@@ -170,7 +170,7 @@
         </div>
 
         <div class="endpoints">
-            <h3>🔗 Quick Links</h3>
+            <h3>� Quick Links</h3>
             <ul>
                 <li><a href="{{ url('/opendelivery-api-schema-validator2/routes') }}">📋 View all available routes</a></li>
                 <li><a href="https://github.com/marcioreck/opendelivery-api-schema-validator2" target="_blank">📚 GitHub Repository</a></li>
@@ -180,3 +180,21 @@
     </div>
 </body>
 </html>
+                <li>
+                    <strong>GET</strong> <code>/opendelivery-api-schema-validator2/blade</code> - This dashboard
+                </li>
+            </ul>
+        </div>
+
+        <div class="info">
+            <strong>🔧 Configuration:</strong><br>
+            Default Schema Version: {{ config('opendelivery.default_schema_version', 'Not configured') }}<br>
+            Supported Versions: {{ implode(', ', config('opendelivery.supported_versions', [])) }}<br>
+            Cache Enabled: {{ config('opendelivery.cache.enabled', false) ? 'Yes' : 'No' }}<br>
+            Node.js Backend: {{ config('opendelivery.nodejs_backend.enabled', false) ? 'Enabled' : 'Disabled' }}
+        </div>
+
+        <div class="endpoints">
+            <h3>📚 Next Steps</h3>
+            <ul>
+
