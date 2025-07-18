@@ -18,7 +18,7 @@ class ValidateController extends Controller
     public function validate(Request $request)
     {
         $payload = $request->input('payload', []);
-        $schemaVersion = $request->input('schema_version');
+        $schemaVersion = $request->input('schema_version') ?? $request->input('version');
 
         try {
             $result = $this->validationService->validatePayload($payload, $schemaVersion);
@@ -38,14 +38,14 @@ class ValidateController extends Controller
     public function compatibility(Request $request)
     {
         $payload = $request->input('payload', []);
-        $fromVersion = $request->input('from_version');
-        $toVersion = $request->input('to_version');
+        $fromVersion = $request->input('from_version') ?? $request->input('fromVersion');
+        $toVersion = $request->input('to_version') ?? $request->input('toVersion');
 
         try {
             if (!$fromVersion || !$toVersion) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Both from_version and to_version parameters are required'
+                    'message' => 'Both from_version/fromVersion and to_version/toVersion parameters are required'
                 ], 400);
             }
 
@@ -66,7 +66,7 @@ class ValidateController extends Controller
     public function certify(Request $request)
     {
         $payload = $request->input('payload', []);
-        $schemaVersion = $request->input('schema_version');
+        $schemaVersion = $request->input('schema_version') ?? $request->input('version');
 
         try {
             $result = $this->validationService->certifyPayload($payload, $schemaVersion);

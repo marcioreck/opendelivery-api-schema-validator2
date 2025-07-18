@@ -12,6 +12,8 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        'opendelivery-api-schema-validator2/validate',
+        'opendelivery-api-schema-validator2/compatibility',
+        'opendelivery-api-schema-validator2/certify',
     ];
 }

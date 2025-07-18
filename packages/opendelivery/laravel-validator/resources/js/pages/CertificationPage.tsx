@@ -26,6 +26,7 @@ import {
   LinearProgress,
   FormControlLabel,
   Switch,
+  Link,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -134,6 +135,24 @@ const CertificationPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+          <strong>OpenDelivery API Schema Validator 2</strong> - Ferramenta para validação, compatibilidade e certificação de implementações da API OpenDelivery. 
+          Desenvolvido por{' '}
+          <Link href="https://fazmercado.com" target="_blank" rel="noopener noreferrer" color="primary">
+            Márcio Reck
+          </Link>
+          {' '} | {' '}
+          <Link href="https://github.com/marcioreck/opendelivery-api-schema-validator2" target="_blank" rel="noopener noreferrer" color="primary">
+            GitHub
+          </Link>
+          {' '} | {' '}
+          <Link href="https://www.opendelivery.com.br/" target="_blank" rel="noopener noreferrer" color="primary">
+            OpenDelivery API
+          </Link>
+        </Typography>
+      </Alert>
+      
       <Typography variant="h4" gutterBottom>
         OpenDelivery Ready Certification
       </Typography>
