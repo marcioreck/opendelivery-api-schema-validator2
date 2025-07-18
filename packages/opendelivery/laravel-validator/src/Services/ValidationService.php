@@ -25,119 +25,149 @@ class ValidationService
     /**
      * Validate a payload against a specific schema version
      */
-    public function validatePayload(array $payload, string $schemaVersion = null): array
+    public function validate($payload, string $version): array
     {
         try {
-            $version = $schemaVersion ?? $this->schemaManager->getDefaultVersion();
-            
-            if (!$this->schemaManager->hasVersion($version)) {
-                throw new \Exception("Schema version {$version} not found");
+            $schemaPath = $this->getSchemaPath($version);
+            if (!file_exists($schemaPath)) {
+                return [
+                    'valid' => false,
+                    'errors' => ["Schema file not found for version {$version}"],
+                    'version' => $version
+                ];
             }
 
-            $schema = $this->schemaManager->loadSchema($version);
+            $openApiSpec = Yaml::parseFile($schemaPath);
             
-            // Convert payload to object for validation
+            // Extract JSON Schema from OpenAPI spec
+            $jsonSchema = $this->extractJsonSchemaFromOpenApi($openApiSpec);
+            
+            // Validate payload against schema
+            $validator = new Validator();
+            
+            // Convert payload to object if it's an array
             $payloadObject = json_decode(json_encode($payload));
             
-            // Extract the actual JSON Schema from OpenAPI spec
-            $jsonSchema = $this->extractJsonSchemaFromOpenApi($schema, $payload);
+            // Convert schema to object format expected by validator
+            $schemaObject = json_decode(json_encode($jsonSchema));
             
-            // Validate against JSON Schema
-            $this->validator->validate($payloadObject, $jsonSchema);
+            $validator->validate($payloadObject, $schemaObject);
             
-            $isValid = $this->validator->isValid();
-            $errors = $this->validator->getErrors();
-            
-            $result = [
-                'valid' => $isValid,
-                'schema_version' => $version,
-                'payload_size' => strlen(json_encode($payload)),
-                'validation_time' => microtime(true),
-                'errors' => $this->formatErrors($errors),
-                'warnings' => $this->generateWarnings($payload, $schema),
-                'score' => $this->calculateValidationScore($isValid, $errors, $payload),
-            ];
-
-            // Log validation attempt
-            Log::info('OpenDelivery validation performed', [
-                'version' => $version,
-                'valid' => $isValid,
-                'errors_count' => count($errors),
-                'payload_size' => $result['payload_size'],
-            ]);
-
-            return $result;
-
-        } catch (\Exception $e) {
-            Log::error('OpenDelivery validation error', [
-                'error' => $e->getMessage(),
-                'version' => $schemaVersion,
-                'payload_size' => strlen(json_encode($payload ?? [])),
-            ]);
+            $errors = [];
+            if (!$validator->isValid()) {
+                foreach ($validator->getErrors() as $error) {
+                    $errors[] = sprintf("[%s] %s", $error['property'], $error['message']);
+                }
+            }
 
             return [
+                'valid' => $validator->isValid(),
+                'errors' => $errors,
+                'version' => $version,
+                'schema_used' => $this->getSchemaNameUsed($jsonSchema),
+                'debug_info' => [
+                    'payload_keys' => array_keys((array)$payloadObject),
+                    'schema_required' => $jsonSchema['required'] ?? [],
+                    'schema_properties' => array_keys($jsonSchema['properties'] ?? [])
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
                 'valid' => false,
-                'schema_version' => $schemaVersion,
-                'error' => $e->getMessage(),
-                'errors' => [],
-                'warnings' => [],
-                'score' => 0,
+                'errors' => ['Validation error: ' . $e->getMessage()],
+                'version' => $version
             ];
         }
+    }
+
+    private function getSchemaNameUsed(array $schema): string
+    {
+        return $schema['title'] ?? 'Unknown Schema';
     }
 
     /**
      * Check compatibility between schema versions
      */
-    public function checkCompatibility(string $fromVersion, string $toVersion, array $payload): array
+    public function checkCompatibility($payload, $fromVersion = null, $toVersion = null): array
     {
         try {
-            if (!$this->schemaManager->hasVersion($fromVersion)) {
-                throw new \Exception("Source schema version {$fromVersion} not found");
+            $versions = $this->getAvailableVersions();
+            $compatibleVersions = [];
+            $errors = [];
+
+            foreach ($versions as $version) {
+                // Skip versions that don't match the from/to filters
+                if ($fromVersion && version_compare($version, $fromVersion, '<')) {
+                    continue;
+                }
+                if ($toVersion && version_compare($version, $toVersion, '>')) {
+                    continue;
+                }
+
+                try {
+                    $validationResult = $this->validate($payload, $version);
+                    if ($validationResult['valid']) {
+                        $compatibleVersions[] = $version;
+                    } else {
+                        $errors[$version] = $validationResult['errors'];
+                    }
+                } catch (\Exception $e) {
+                    $errors[$version] = ['Schema validation error: ' . $e->getMessage()];
+                }
             }
 
-            if (!$this->schemaManager->hasVersion($toVersion)) {
-                throw new \Exception("Target schema version {$toVersion} not found");
+            // If no compatible versions found, let's try a more lenient approach
+            if (empty($compatibleVersions)) {
+                // Check if the payload has the basic structure of an OpenDelivery order
+                if ($this->hasBasicOrderStructure($payload)) {
+                    // Try to find the most suitable version based on payload features
+                    $suggestedVersion = $this->suggestVersionBasedOnPayload($payload);
+                    if ($suggestedVersion) {
+                        return [
+                            'compatible' => false,
+                            'versions' => [],
+                            'suggested_version' => $suggestedVersion,
+                            'message' => "Payload has OpenDelivery structure but needs adjustments for version {$suggestedVersion}",
+                            'errors' => $errors
+                        ];
+                    }
+                }
             }
-
-            $fromSchema = $this->schemaManager->loadSchema($fromVersion);
-            $toSchema = $this->schemaManager->loadSchema($toVersion);
-
-            // If payload is provided, validate against both versions
-            $fromValidation = !empty($payload) ? $this->validatePayload($payload, $fromVersion) : null;
-            $toValidation = !empty($payload) ? $this->validatePayload($payload, $toVersion) : null;
-
-            $compatibility = $this->analyzeSchemaCompatibility($fromSchema, $toSchema);
 
             return [
-                'compatible' => $compatibility['compatible'],
-                'from_version' => $fromVersion,
-                'to_version' => $toVersion,
-                'compatibility_score' => $compatibility['score'],
-                'breaking_changes' => $compatibility['breaking_changes'],
-                'new_features' => $compatibility['new_features'],
-                'deprecated_features' => $compatibility['deprecated_features'],
-                'migration_notes' => $compatibility['migration_notes'],
-                'payload_validation' => [
-                    'from' => $fromValidation,
-                    'to' => $toValidation,
-                ],
+                'compatible' => !empty($compatibleVersions),
+                'versions' => $compatibleVersions,
+                'errors' => $errors,
+                'message' => empty($compatibleVersions) 
+                    ? '❌ Payload is not compatible with any OpenDelivery version. Please check the payload structure.'
+                    : '✅ Payload is compatible with OpenDelivery versions: ' . implode(', ', $compatibleVersions)
             ];
-
         } catch (\Exception $e) {
-            Log::error('OpenDelivery compatibility check error', [
-                'error' => $e->getMessage(),
-                'from_version' => $fromVersion,
-                'to_version' => $toVersion,
-            ]);
-
             return [
                 'compatible' => false,
-                'error' => $e->getMessage(),
-                'from_version' => $fromVersion,
-                'to_version' => $toVersion,
+                'versions' => [],
+                'errors' => ['general' => [$e->getMessage()]],
+                'message' => 'Error during compatibility check: ' . $e->getMessage()
             ];
         }
+    }
+
+    private function hasBasicOrderStructure($payload): bool
+    {
+        // Check if payload has basic OpenDelivery order structure
+        return is_array($payload) && (
+            (isset($payload['id']) && isset($payload['type'])) ||
+            (isset($payload['order']) && is_array($payload['order']))
+        );
+    }
+
+    private function suggestVersionBasedOnPayload($payload): ?string
+    {
+        // Simple heuristic to suggest a version based on payload features
+        $versions = $this->getAvailableVersions();
+        
+        // For now, suggest the latest version
+        return end($versions);
     }
 
     /**
@@ -190,35 +220,26 @@ class ValidationService
     /**
      * Extract JSON Schema from OpenAPI specification
      */
-    private function extractJsonSchemaFromOpenApi(array $openApiSchema, array $payload): object
+    private function extractJsonSchemaFromOpenApi(array $openApiSpec): array
     {
-        // For now, we'll use a basic schema extraction
-        // In a full implementation, this would properly extract the relevant schema
-        // based on the payload structure and OpenAPI paths
-        
-        if (isset($openApiSchema['components']['schemas'])) {
-            // Try to find the main schema based on common patterns
-            $schemas = $openApiSchema['components']['schemas'];
-            
-            // Look for main delivery schema
-            foreach (['Delivery', 'DeliveryRequest', 'Order', 'Package'] as $schemaName) {
-                if (isset($schemas[$schemaName])) {
-                    return (object) $schemas[$schemaName];
-                }
-            }
-            
-            // If no main schema found, use the first one
-            if (!empty($schemas)) {
-                return (object) array_values($schemas)[0];
-            }
+        if (!isset($openApiSpec['components']['schemas'])) {
+            throw new \InvalidArgumentException('OpenAPI specification does not contain schemas');
         }
 
-        // Fallback: create a basic schema
-        return (object) [
-            'type' => 'object',
-            'properties' => (object) [],
-            'additionalProperties' => true,
-        ];
+        $schemas = $openApiSpec['components']['schemas'];
+        
+        // Look for the most relevant schema for payload validation
+        // Based on actual OpenAPI schema names found in the YAML files
+        $preferredSchemas = ['Order', 'DeliveryOrder', 'DeliveryOrderEvent', 'Delivery', 'DeliveryRequest', 'OrderPayload', 'Payment'];
+        
+        foreach ($preferredSchemas as $schemaName) {
+            if (isset($schemas[$schemaName])) {
+                return $schemas[$schemaName];
+            }
+        }
+        
+        // Fallback to the first available schema
+        return reset($schemas);
     }
 
     /**
