@@ -68,8 +68,46 @@ export interface ComplianceCheck {
   description: string;
   details?: string;
 }
+  addedIn: string;
+  required: boolean;
+  type: string;
+  description: string;
+}
 
-// Laravel-specific request types
+export interface CertificationResult {
+  certified: boolean;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  level: 'basic' | 'intermediate' | 'advanced' | 'expert';
+  checks: CertificationCheck[];
+}
+
+export interface CertificationCheck {
+  name: string;
+  passed: boolean;
+  score: number;
+  maxScore: number;
+  category: string;
+  description: string;
+  errors?: string[];
+}
+
+export interface SchemaVersion {
+  version: string;
+  name: string;
+  description: string;
+  releaseDate: string;
+  status: 'stable' | 'beta' | 'deprecated';
+  isDefault: boolean;
+}
+
+export interface ApiError {
+  message: string;
+  code: string;
+  details?: any;
+}
+
 export interface ValidationRequest {
   payload: object;
   version: string;
@@ -88,17 +126,36 @@ export interface CertificationRequest {
   includeWarnings?: boolean;
 }
 
-export interface ApiError {
-  message: string;
-  code: string;
-  details?: any;
+// Component Props Types
+export interface ValidationFormProps {
+  onValidate: (request: ValidationRequest) => Promise<ValidationResult>;
+  loading?: boolean;
+  initialPayload?: string;
+  initialVersion?: string;
 }
 
-export interface SchemaVersion {
-  version: string;
-  name: string;
-  description: string;
-  releaseDate: string;
-  status: 'stable' | 'beta' | 'deprecated';
-  isDefault: boolean;
+export interface CompatibilityFormProps {
+  onCheck: (request: CompatibilityRequest) => Promise<CompatibilityResult>;
+  loading?: boolean;
+  availableVersions: SchemaVersion[];
+}
+
+export interface CertificationFormProps {
+  onCertify: (request: CertificationRequest) => Promise<CertificationResult>;
+  loading?: boolean;
+  initialPayload?: string;
+  initialVersion?: string;
+}
+
+export interface ResultDisplayProps {
+  result: ValidationResult | CompatibilityResult | CertificationResult;
+  type: 'validation' | 'compatibility' | 'certification';
+}
+
+export interface MonacoEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  language?: string;
+  height?: number;
+  options?: any;
 }

@@ -48,10 +48,23 @@ class ValidateController extends Controller
             $result = $this->validationService->validate($payload, $schemaVersion);
             error_log("ValidateController::validate - ValidationService returned result");
             
-            return $this->corsResponse([
-                'status' => 'success',
-                'data' => $result
-            ]);
+            // Format response to match Node.js backend rigorously
+            if ($result['valid']) {
+                return $this->corsResponse([
+                    'status' => 'success',
+                    'details' => [
+                        'schema_version' => $result['version'],
+                        'validated_at' => $result['validated_at'] ?? now()->toISOString()
+                    ]
+                ]);
+            } else {
+                return $this->corsResponse([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $result['errors'],
+                    'schema_version' => $result['version']
+                ]);
+            }
         } catch (\Exception $e) {
             error_log("ValidateController::validate - EXCEPTION: " . $e->getMessage());
             return $this->corsResponse([
@@ -74,8 +87,8 @@ class ValidateController extends Controller
         error_log("ValidateController::compatibility - Method: " . $request->getMethod());
 
         $payload = $request->input('payload', []);
-        $fromVersion = $request->input('from_version') ?? $request->input('fromVersion');
-        $toVersion = $request->input('to_version') ?? $request->input('toVersion');
+        $fromVersion = $request->input('fromVersion');  // Standardized parameter name
+        $toVersion = $request->input('toVersion');      // Standardized parameter name
         
         error_log("ValidateController::compatibility - fromVersion: " . $fromVersion . ", toVersion: " . $toVersion);
 
@@ -84,7 +97,7 @@ class ValidateController extends Controller
                 error_log("ValidateController::compatibility - ERROR: Missing version parameters");
                 return $this->corsResponse([
                     'status' => 'error',
-                    'message' => 'Both from_version/fromVersion and to_version/toVersion parameters are required'
+                    'message' => 'Both fromVersion and toVersion parameters are required'
                 ], 400);
             }
 
@@ -113,7 +126,7 @@ class ValidateController extends Controller
         }
 
         $payload = $request->input('payload', []);
-        $schemaVersion = $request->input('schema_version') ?? $request->input('version');
+        $schemaVersion = $request->input('version');  // Standardized parameter name
 
         try {
             $result = $this->validationService->certifyPayload($payload, $schemaVersion);

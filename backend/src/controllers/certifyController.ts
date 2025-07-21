@@ -11,9 +11,9 @@ const certificationService = new CertificationService();
 certifyRouter.post(
   '/',
   [
-    body('schema_version')
+    body('version')
       .isString()
-      .matches(/^\d+\.\d+\.\d+(-rc)?$/)
+      .matches(/^\d+\.\d+\.\d+(-rc|-beta|\.beta|beta)?$/)
       .withMessage('Invalid schema version format'),
     body('payload')
       .isObject()
@@ -22,10 +22,10 @@ certifyRouter.post(
   validateRequest,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { schema_version, payload } = req.body;
+      const { version, payload } = req.body;
 
       const certificationResult = await certificationService.certify(
-        schema_version,
+        version,
         payload
       );
 

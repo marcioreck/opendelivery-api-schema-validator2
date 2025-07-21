@@ -102,7 +102,7 @@ export default function CompatibilityPage() {
       setError('');
       
       const parsedPayload = JSON.parse(payload);
-      const response = await checkCompatibility(sourceVersion, targetVersion, parsedPayload);
+      const response = await checkCompatibility(parsedPayload, sourceVersion, targetVersion);
       
       setResult(response);
     } catch (err) {

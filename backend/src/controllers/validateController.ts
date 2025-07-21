@@ -11,9 +11,9 @@ const validationService = new ValidationService();
 validateRouter.post(
   '/',
   [
-    body('schema_version')
+    body('version')
       .isString()
-      .matches(/^\d+\.\d+\.\d+(-rc)?$/)
+      .matches(/^\d+\.\d+\.\d+(-rc|-beta|\.beta|beta)?$/)
       .withMessage('Invalid schema version format'),
     body('payload')
       .isObject()
@@ -22,9 +22,9 @@ validateRouter.post(
   validateRequest,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { schema_version, payload } = req.body;
+      const { version, payload } = req.body;
 
-      const validationResult = await validationService.validate(schema_version, payload);
+      const validationResult = await validationService.validate(version, payload);
 
       if (!validationResult.valid) {
         return res.status(400).json({
@@ -35,16 +35,15 @@ validateRouter.post(
             message: error.message,
             details: (error as any).details || {}
           })) || [],
-          schema_version
+          schema_version: version
         });
       }
 
       res.json({
         status: 'success',
-        message: 'Payload is valid',
         details: {
-          ...validationResult.details,
-          schema_version
+          schema_version: version,
+          validated_at: validationResult.details?.validated_at || new Date().toISOString()
         }
       });
     } catch (error) {

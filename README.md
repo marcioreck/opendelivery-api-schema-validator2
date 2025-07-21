@@ -153,7 +153,7 @@ Este projeto também está disponível como um **pacote Laravel** para fácil in
 - **Laravel 10**: http://localhost:8010/opendelivery-api-schema-validator2
 - **Laravel 12**: http://localhost:8012/opendelivery-api-schema-validator2
 - **Frontend Standalone**: http://localhost:8000
-- **Vite Dev Server (Pacote)**: http://localhost:5175 (busca automaticamente porta livre)
+- **Vite Dev Server (Pacote)**: http://localhost:5173 (busca automaticamente porta livre)
 
 #### Configuração MySQL
 
@@ -185,6 +185,9 @@ sudo mysql -u root -p -e "FLUSH PRIVILEGES;"
 
 #### Servidores de Desenvolvimento
 ```bash
+# Vite
+cd packages/opendelivery/laravel-validator && npm run dev
+
 # Laravel 10.x (compatibilidade produção)
 cd laravel-test-app
 php artisan migrate:status
@@ -351,7 +354,7 @@ npm run dev
 **📋 Configuração de Portas:**
 - **Laravel 10**: `http://127.0.0.1:8010`
 - **Laravel 12**: `http://127.0.0.1:8012` 
-- **Vite Dev Server**: `http://127.0.0.1:5175` (busca automaticamente porta livre)
+- **Vite Dev Server**: `http://127.0.0.1:5173` (busca automaticamente porta livre)
 - **Frontend Standalone**: `http://127.0.0.1:8000`
 
 #### 2. Iniciar Servidores Laravel de Teste
@@ -524,6 +527,41 @@ Após a instalação, as seguintes rotas estarão disponíveis:
 - **Schemas**: `GET /opendelivery-api-schema-validator2/schemas`
 
 #### Testes Manuais dos Endpoints:
+
+**⚡ ROTAS E PARÂMETROS UNIFICADOS - Ambas as implementações usam as mesmas rotas e parâmetros:**
+
+**🔧 Correções Aplicadas:**
+- ✅ **Backend Node.js**: Rotas alteradas de `/api/*` para `/opendelivery-api-schema-validator2/*`
+- ✅ **Parâmetros**: `schema_version` → `version`, `from_version/to_version` → `fromVersion/toVersion` 
+- ✅ **Validação**: Regex corrigido para aceitar todas as versões (incluindo `beta`)
+- ✅ **Frontend**: API calls e proxy atualizados, ordem de parâmetros corrigida
+- ✅ **Laravel**: Parâmetros padronizados, remoção de fallbacks desnecessários
+
+**Frontend Standalone (Backend Node.js):**
+```bash
+# Test Health Check
+curl "http://localhost:3001/opendelivery-api-schema-validator2/health"
+
+# Test Validation
+curl -X POST "http://localhost:3001/opendelivery-api-schema-validator2/validate" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "1.5.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Compatibility  
+curl -X POST "http://localhost:3001/opendelivery-api-schema-validator2/compatibility" \
+  -H "Content-Type: application/json" \
+  -d '{"fromVersion": "1.5.0", "toVersion": "1.6.0-rc", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Certification
+curl -X POST "http://localhost:3001/opendelivery-api-schema-validator2/certify" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "1.5.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Schemas
+curl "http://localhost:3001/opendelivery-api-schema-validator2/schemas"
+```
+
+**Pacote Laravel:**
 ```bash
 # Test Health Check
 curl "http://localhost:8010/opendelivery-api-schema-validator2/health"
@@ -531,12 +569,36 @@ curl "http://localhost:8010/opendelivery-api-schema-validator2/health"
 # Test Validation
 curl -X POST "http://localhost:8010/opendelivery-api-schema-validator2/validate" \
   -H "Content-Type: application/json" \
-  -d '{"schema": "1.6.0", "payload": {"version": "1.6.0", "merchant": {"id": "test"}}}'
+  -d '{"version": "1.5.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
 
 # Test Compatibility
 curl -X POST "http://localhost:8010/opendelivery-api-schema-validator2/compatibility" \
   -H "Content-Type: application/json" \
-  -d '{"fromVersion": "1.5.0", "toVersion": "1.6.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+  -d '{"fromVersion": "1.5.0", "toVersion": "1.6.0-rc", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Certification  
+curl -X POST "http://localhost:8010/opendelivery-api-schema-validator2/certify" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "1.5.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Schemas
+curl "http://localhost:8010/opendelivery-api-schema-validator2/schemas"
+```
+
+**📋 Parâmetros Padronizados (Todos os Endpoints):**
+- **Validação**: `{"version": "1.5.0", "payload": {...}}`
+- **Compatibilidade**: `{"fromVersion": "1.5.0", "toVersion": "1.6.0-rc", "payload": {...}}`
+- **Certificação**: `{"version": "1.5.0", "payload": {...}}`
+
+# Test Validation
+curl -X POST "http://localhost:8010/opendelivery-api-schema-validator2/validate" \
+  -H "Content-Type: application/json" \
+  -d '{"version": "1.5.0", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
+
+# Test Compatibility
+curl -X POST "http://localhost:8010/opendelivery-api-schema-validator2/compatibility" \
+  -H "Content-Type: application/json" \
+  -d '{"fromVersion": "1.5.0", "toVersion": "1.6.0-rc", "payload": {"version": "1.5.0", "merchant": {"id": "test"}}}'
 ```
 
 ### Comandos Úteis

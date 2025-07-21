@@ -22,7 +22,7 @@ if (import.meta.env.DEV) {
   // Test connectivity on module load
   setTimeout(async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/api/health`, { timeout: 5000 });
+      const response = await axios.get(`${apiBaseUrl}/opendelivery-api-schema-validator2/health`, { timeout: 5000 });
       console.log('✅ API Health Check: OK', response.data.service);
     } catch (error: any) {
       console.error('❌ API Health Check: Failed', error.message);
@@ -105,61 +105,86 @@ api.interceptors.response.use(
   }
 );
 
-export const validatePayload = async (payload: unknown, version: string): Promise<ValidationResult> => {
+export async function validatePayload(
+  payload: any, 
+  schemaVersion: string = '1.5.0'
+): Promise<ValidationResult> {
   try {
+    console.log('🔍 Validating payload:', { 
+      version: schemaVersion, 
+      hasPayload: !!payload 
+    });
+
     const requestData = {
-      schema_version: version,
+      version: schemaVersion, // Changed from schema_version to version
       payload
     };
+
+    const response = await api.post('/opendelivery-api-schema-validator2/validate', requestData);
     
-    const response = await api.post('/api/validate', requestData);
+    console.log('✅ Validation successful:', response.data);
     return response.data;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = (error as any).userMessage || error.response?.data?.error || 'Validation failed';
-      throw new Error(errorMessage);
+    console.error('❌ Validation error:', error);
+    
+    // Handle validation errors from the server
+    if (error.response?.status === 400) {
+      return error.response.data;
     }
-    throw new Error('Erro inesperado durante a validação');
+    
+    throw error;
   }
-};
+}
 
-export const checkCompatibility = async (
-  sourceVersion: string,
-  targetVersion: string,
-  payload: unknown
-): Promise<CompatibilityReport> => {
+export async function checkCompatibility(
+  payload: any,
+  fromVersion: string = '1.5.0',
+  toVersion: string = '1.6.0-rc'
+): Promise<CompatibilityReport> {
   try {
+    console.log('🔄 Checking compatibility:', { 
+      fromVersion, 
+      toVersion, 
+      hasPayload: !!payload 
+    });
+
     const requestData = {
-      from_version: sourceVersion,
-      to_version: targetVersion,
+      fromVersion,  // Changed from from_version to fromVersion
+      toVersion,    // Changed from to_version to toVersion
       payload
     };
-    
-    const response = await api.post('/api/compatibility', requestData);
-    return response.data;
-  } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = (error as any).userMessage || error.response?.data?.error || 'Compatibility check failed';
-      throw new Error(errorMessage);
-    }
-    throw new Error('Erro inesperado durante a verificação de compatibilidade');
-  }
-};
 
-export const certifyPayload = async (payload: unknown, version: string): Promise<CertificationResult> => {
-  try {
-    const requestData = { 
-      schema_version: version,
-      payload 
-    };
+    const response = await api.post('/opendelivery-api-schema-validator2/compatibility', requestData);
     
-    const response = await api.post('/api/certify', requestData);
+    console.log('✅ Compatibility check successful:', response.data);
     return response.data;
   } catch (error: any) {
-    if (axios.isAxiosError(error)) {
-      const errorMessage = (error as any).userMessage || error.response?.data?.error || 'Certification failed';
-      throw new Error(errorMessage);
-    }
-    throw new Error('Erro inesperado durante a certificação');
+    console.error('❌ Compatibility error:', error);
+    throw error;
   }
-}; 
+}
+
+export async function certifyPayload(
+  payload: any,
+  schemaVersion: string = '1.5.0'
+): Promise<CertificationResult> {
+  try {
+    console.log('🏆 Certifying payload:', { 
+      version: schemaVersion, 
+      hasPayload: !!payload 
+    });
+
+    const requestData = {
+      version: schemaVersion, // Changed from schema_version to version
+      payload
+    };
+
+    const response = await api.post('/opendelivery-api-schema-validator2/certify', requestData);
+    
+    console.log('✅ Certification successful:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Certification error:', error);
+    throw error;
+  }
+} 

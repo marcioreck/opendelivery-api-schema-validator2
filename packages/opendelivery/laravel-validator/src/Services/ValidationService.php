@@ -63,70 +63,48 @@ class ValidationService
         return $this->schemaManager->getSchemaInfo($version);
     }
 
-    /**
-     * Validate a payload against a specific schema version
+        /**
+     * Validate payload against OpenDelivery schema with rigorous checking
      */
-    public function validate($payload, string $version): array
+    public function validate($payload, string $version = null): array
     {
-        error_log("ValidationService::validate - START for version: " . $version);
+        error_log("ValidationService::validate - START");
+        
+        $version = $version ?? $this->getDefaultVersion();
+        error_log("ValidationService::validate - Using version: {$version}");
+
         try {
-            error_log("ValidationService::validate - Getting schema path");
-            $schemaPath = $this->getSchemaPath($version);
-            error_log("ValidationService::validate - Schema path: " . $schemaPath);
-            
-            if (!file_exists($schemaPath)) {
-                error_log("ValidationService::validate - ERROR: Schema file not found");
+            // Load the schema with proper structure
+            $schema = $this->loadSchema($version);
+            if (!$schema) {
                 return [
                     'valid' => false,
-                    'errors' => ["Schema file not found for version {$version}"],
+                    'errors' => ["Schema version {$version} not found"],
                     'version' => $version
                 ];
             }
 
-            error_log("ValidationService::validate - Parsing YAML file");
-            $openApiSpec = Yaml::parseFile($schemaPath);
-            error_log("ValidationService::validate - YAML parsed, extracting JSON schema");
-            
-            // Extract JSON Schema from OpenAPI spec
-            $jsonSchema = $this->extractJsonSchemaFromOpenApi($openApiSpec);
-            error_log("ValidationService::validate - JSON schema extracted");
-            
-            // Validate payload against schema
-            error_log("ValidationService::validate - Creating validator");
-            $validator = new Validator();
-            
-            // Convert payload to object if it's an array
-            error_log("ValidationService::validate - Converting payload");
-            $payloadObject = json_decode(json_encode($payload));
-            
-            // Convert schema to object format expected by validator
-            error_log("ValidationService::validate - Converting schema");
-            $schemaObject = json_decode(json_encode($jsonSchema));
-            
-            error_log("ValidationService::validate - Running validation");
-            $validator->validate($payloadObject, $schemaObject);
-            error_log("ValidationService::validate - Validation completed");
-            
-            $errors = [];
-            if (!$validator->isValid()) {
-                error_log("ValidationService::validate - Validation failed, processing errors");
-                foreach ($validator->getErrors() as $error) {
-                    $errors[] = sprintf("[%s] %s", $error['property'], $error['message']);
-                }
+            // Get the Order schema from OpenAPI spec
+            $orderSchema = $schema['components']['schemas']['Order'] ?? null;
+            if (!$orderSchema) {
+                return [
+                    'valid' => false,
+                    'errors' => ["Schema version {$version} does not contain Order definition"],
+                    'version' => $version
+                ];
             }
 
-            error_log("ValidationService::validate - Returning result");
+            // Perform rigorous validation using the same logic as Node.js backend
+            $errors = $this->validateStructure($payload, $orderSchema, '');
+
             return [
-                'valid' => $validator->isValid(),
+                'valid' => empty($errors),
                 'errors' => $errors,
                 'version' => $version,
-                'schema_used' => $this->getSchemaNameUsed($jsonSchema),
-                'debug_info' => [
-                    'payload_keys' => array_keys((array)$payloadObject),
-                    'schema_required' => $jsonSchema['required'] ?? [],
-                    'schema_properties' => array_keys($jsonSchema['properties'] ?? [])
-                ]
+                'schema_used' => $schema['info']['title'] ?? "OpenDelivery API {$version}",
+                'validated_at' => now()->toISOString()
             ];
+            
         } catch (\Exception $e) {
             error_log("ValidationService::validate - EXCEPTION: " . $e->getMessage());
             return [
@@ -135,6 +113,203 @@ class ValidationService
                 'version' => $version
             ];
         }
+    }
+
+    /**
+     * Load schema with proper error handling
+     */
+    private function loadSchema(string $version): ?array
+    {
+        try {
+            $schemaPath = $this->getSchemaPath($version);
+            if (!file_exists($schemaPath)) {
+                error_log("Schema file not found: {$schemaPath}");
+                return null;
+            }
+
+            $yamlContent = file_get_contents($schemaPath);
+            $schema = Yaml::parse($yamlContent);
+            
+            return $schema;
+        } catch (\Exception $e) {
+            error_log("Error loading schema {$version}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Validate structure with the same rigorous logic as Node.js backend
+     */
+    private function validateStructure($payload, array $schema, string $path): array
+    {
+        $errors = [];
+
+        // Check required fields (RIGOROUS)
+        if (isset($schema['required'])) {
+            foreach ($schema['required'] as $field) {
+                if (!isset($payload[$field])) {
+                    $fieldPath = $path ? "{$path}.{$field}" : $field;
+                    $errors[] = [
+                        'path' => $fieldPath,
+                        'message' => "Required field '{$field}' is missing",
+                        'details' => []
+                    ];
+                }
+            }
+        }
+
+        // Check properties types and values (RIGOROUS)
+        if (isset($schema['properties'])) {
+            foreach ($schema['properties'] as $field => $definition) {
+                if (isset($payload[$field])) {
+                    $value = $payload[$field];
+                    $fieldPath = $path ? "{$path}.{$field}" : $field;
+                    
+                    $fieldErrors = $this->validateField($value, $definition, $fieldPath, $field);
+                    $errors = array_merge($errors, $fieldErrors);
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate individual field with rigorous type checking
+     */
+    private function validateField($value, array $definition, string $fieldPath, string $fieldName): array
+    {
+        $errors = [];
+
+        // Type validation
+        if (isset($definition['type'])) {
+            $type = $definition['type'];
+            
+            switch ($type) {
+                case 'string':
+                    if (!is_string($value)) {
+                        $errors[] = [
+                            'path' => $fieldPath,
+                            'message' => "Field '{$fieldName}' must be a string",
+                            'details' => ['type' => gettype($value)]
+                        ];
+                    }
+                    break;
+                    
+                case 'number':
+                    if (!is_numeric($value)) {
+                        $errors[] = [
+                            'path' => $fieldPath,
+                            'message' => "Field '{$fieldName}' must be a number",
+                            'details' => ['type' => gettype($value)]
+                        ];
+                    }
+                    break;
+                    
+                case 'array':
+                    if (!is_array($value)) {
+                        $errors[] = [
+                            'path' => $fieldPath,
+                            'message' => "Field '{$fieldName}' must be an array",
+                            'details' => ['type' => gettype($value)]
+                        ];
+                    }
+                    break;
+                    
+                case 'object':
+                    if (!is_array($value) && !is_object($value)) {
+                        $errors[] = [
+                            'path' => $fieldPath,
+                            'message' => "Field '{$fieldName}' must be an object",
+                            'details' => ['type' => gettype($value)]
+                        ];
+                    }
+                    break;
+            }
+        }
+
+        // Enum validation
+        if (isset($definition['enum'])) {
+            if (!in_array($value, $definition['enum'])) {
+                $errors[] = [
+                    'path' => $fieldPath,
+                    'message' => "Invalid value for '{$fieldName}'. Must be one of: " . implode(', ', $definition['enum']),
+                    'details' => ['value' => $value, 'allowed' => $definition['enum']]
+                ];
+            }
+        }
+
+        // Nested object validation
+        if (isset($definition['type']) && $definition['type'] === 'object' && (is_array($value) || is_object($value))) {
+            $nestedErrors = $this->validateStructure($value, $definition, $fieldPath);
+            $errors = array_merge($errors, $nestedErrors);
+        }
+
+        // Array items validation  
+        if (isset($definition['type']) && $definition['type'] === 'array' && is_array($value)) {
+            if (isset($definition['items'])) {
+                foreach ($value as $index => $item) {
+                    $itemPath = "{$fieldPath}[{$index}]";
+                    $itemErrors = $this->validateStructure($item, $definition['items'], $itemPath);
+                    $errors = array_merge($errors, $itemErrors);
+                }
+            }
+        }
+
+        // Numeric constraints
+        if (isset($definition['type']) && $definition['type'] === 'number' && is_numeric($value)) {
+            if (isset($definition['minimum']) && $value < $definition['minimum']) {
+                $errors[] = [
+                    'path' => $fieldPath,
+                    'message' => "Value must be >= {$definition['minimum']}",
+                    'details' => ['value' => $value, 'minimum' => $definition['minimum']]
+                ];
+            }
+            
+            if (isset($definition['maximum']) && $value > $definition['maximum']) {
+                $errors[] = [
+                    'path' => $fieldPath,
+                    'message' => "Value must be <= {$definition['maximum']}",
+                    'details' => ['value' => $value, 'maximum' => $definition['maximum']]
+                ];
+            }
+        }
+
+        // String format validation
+        if (isset($definition['type']) && $definition['type'] === 'string' && is_string($value)) {
+            if (isset($definition['format'])) {
+                switch ($definition['format']) {
+                    case 'email':
+                        if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                            $errors[] = [
+                                'path' => $fieldPath,
+                                'message' => 'Invalid email format'
+                            ];
+                        }
+                        break;
+                        
+                    case 'date-time':
+                        if (!$this->isValidDateTime($value)) {
+                            $errors[] = [
+                                'path' => $fieldPath,
+                                'message' => 'Invalid date-time format'
+                            ];
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate date-time format
+     */
+    private function isValidDateTime(string $dateTime): bool
+    {
+        $date = \DateTime::createFromFormat('Y-m-d\TH:i:s\Z', $dateTime);
+        return $date !== false && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $dateTime);
     }
 
     private function getSchemaNameUsed(array $schema): string

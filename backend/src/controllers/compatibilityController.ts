@@ -11,13 +11,13 @@ const compatibilityService = new CompatibilityService();
 compatibilityRouter.post(
   '/',
   [
-    body('from_version')
+    body('fromVersion')
       .isString()
-      .matches(/^\d+\.\d+\.\d+(-rc|beta)?$/)
+      .matches(/^\d+\.\d+\.\d+(-rc|-beta|\.beta|beta)?$/)
       .withMessage('Invalid from version format'),
-    body('to_version')
+    body('toVersion')
       .isString()
-      .matches(/^\d+\.\d+\.\d+(-rc|beta)?$/)
+      .matches(/^\d+\.\d+\.\d+(-rc|-beta|\.beta|beta)?$/)
       .withMessage('Invalid to version format'),
     body('payload')
       .isObject()
@@ -27,11 +27,11 @@ compatibilityRouter.post(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       console.log('📥 Compatibility request received:', req.body);
-      const { from_version, to_version, payload } = req.body;
+      const { fromVersion, toVersion, payload } = req.body;
 
       const compatibilityResult = await compatibilityService.checkCompatibility(
-        from_version,
-        to_version,
+        fromVersion,
+        toVersion,
         payload
       );
 

@@ -41,13 +41,13 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 
-// Routes
-app.use('/api/validate', validateRouter);
-app.use('/api/compatibility', compatibilityRouter);
-app.use('/api/certify', certifyRouter);
+// Routes with unified prefix
+app.use('/opendelivery-api-schema-validator2/validate', validateRouter);
+app.use('/opendelivery-api-schema-validator2/compatibility', compatibilityRouter);
+app.use('/opendelivery-api-schema-validator2/certify', certifyRouter);
 
 // Health check endpoint
-app.get('/api/health', (_, res) => {
+app.get('/opendelivery-api-schema-validator2/health', (_, res) => {
   try {
     const uptime = process.uptime();
     const memoryUsage = process.memoryUsage();
@@ -72,10 +72,11 @@ app.get('/api/health', (_, res) => {
         count: 11
       },
       endpoints: {
-        validate: '/api/validate',
-        compatibility: '/api/compatibility',
-        certify: '/api/certify',
-        health: '/api/health'
+        validate: '/opendelivery-api-schema-validator2/validate',
+        compatibility: '/opendelivery-api-schema-validator2/compatibility',
+        certify: '/opendelivery-api-schema-validator2/certify',
+        health: '/opendelivery-api-schema-validator2/health',
+        schemas: '/opendelivery-api-schema-validator2/schemas'
       }
     };
     
@@ -92,6 +93,26 @@ app.get('/api/health', (_, res) => {
 
 // Error handling
 app.use(errorHandler);
+
+// Schema versions endpoint
+app.get('/opendelivery-api-schema-validator2/schemas', async (_, res) => {
+  try {
+    const versions = schemaManager.getAvailableVersions();
+    const schemaList = versions.map(version => ({
+      version,
+      name: version === ('beta' as any) ? 'Beta Version' : `Version ${version}`,
+      description: version === ('beta' as any) ? 'Latest beta features' : `OpenDelivery API Schema ${version}`,
+      releaseDate: version === '1.6.0-rc' ? '2024-01-01' : '2024-01-15',
+      status: (version === ('beta' as any) || version.includes('rc')) ? 'beta' : 'stable',
+      isDefault: version === '1.5.0'
+    }));
+    
+    res.json(schemaList);
+  } catch (error) {
+    logger.error('Error fetching schemas:', error);
+    res.status(500).json({ error: 'Failed to fetch schemas' });
+  }
+});
 
 // Start server with schema loading
 async function startServer() {

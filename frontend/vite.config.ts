@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     port: 8000,
     proxy: {
-      '/api': {
+      '/opendelivery-api-schema-validator2': {
         target: 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
