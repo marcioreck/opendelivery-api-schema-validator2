@@ -1,0 +1,47 @@
+{
+  "name": "opendelivery-laravel-validator-assets",
+  "version": "2.0.0",
+  "description": "Frontend assets for OpenDelivery Laravel Validator Package",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:check": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write \"resources/js/**/*.{ts,tsx}\"",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@monaco-editor/react": "^4.6.0",
+    "@mui/icons-material": "^5.15.0",
+    "@mui/material": "^5.15.0",
+    "@mui/system": "^5.15.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "@typescript-eslint/eslint-plugin": "^6.13.2",
+    "@typescript-eslint/parser": "^6.13.2",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "vitest": "^1.0.4"
+  },
+  "author": {
+    "name": "Márcio Reck",
+    "url": "https://fazmercado.com"
+  },
+  "license": "MIT"
+}

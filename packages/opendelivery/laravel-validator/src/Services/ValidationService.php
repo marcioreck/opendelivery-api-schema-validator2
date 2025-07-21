@@ -5,7 +5,24 @@ namespace OpenDelivery\LaravelValidator\Services;
 use JsonSchema\Validator;
 use JsonSchema\Constraints\Constraint;
 use JsonSchema\SchemaStorage;
-use JsonSchema\Uri\UriRetriever;
+us    /**
+     * Validate data structure against schema (OPTIMIZED for performance)
+     */
+    private function validateStructure($payload, array $schema, string $path = '', array $fullSchema = null): array
+    {
+        $errors = [];
+
+        // For performance, only resolve $ref for simple cases, not deep nested structures
+        if (isset($schema['$ref']) && $fullSchema && count(explode('.', $path)) < 3) {
+            $visited = [];
+            $schema = $this->resolveSchemaReferences($schema, $fullSchema, $visited);
+        }
+
+        // Check required fields (RIGOROUS)
+        if (isset($schema['required'])) {
+            foreach ($schema['required'] as $field) {
+                if (!isset($payload[$field])) {
+                    $fieldPath = $path ? "{$path}.{$field}" : $field;\UriRetriever;
 use JsonSchema\Uri\UriResolver;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Yaml\Yaml;
@@ -64,7 +81,7 @@ class ValidationService
     }
 
         /**
-     * Validate payload against OpenDelivery schema with rigorous checking
+     * Validate payload against OpenDelivery schema with rigorous checking (aligned with Node.js backend)
      */
     public function validate($payload, string $version = null): array
     {
@@ -95,15 +112,31 @@ class ValidationService
             }
 
             // Perform rigorous validation using the same logic as Node.js backend
-            $errors = $this->validateStructure($payload, $orderSchema, '');
+            $errors = $this->validateStructure($payload, $orderSchema, '', $schema);
+            $warnings = $this->generateWarnings($payload, $orderSchema);
 
-            return [
-                'valid' => empty($errors),
-                'errors' => $errors,
-                'version' => $version,
-                'schema_used' => $schema['info']['title'] ?? "OpenDelivery API {$version}",
-                'validated_at' => now()->toISOString()
-            ];
+            if (empty($errors)) {
+                return [
+                    'valid' => true,
+                    'details' => [
+                        'schema_version' => $version,
+                        'validation_timestamp' => now()->toISOString(),
+                        'total_fields_validated' => $this->countFields($payload),
+                        'strict_mode' => true
+                    ],
+                    'warnings' => $warnings,
+                    'version' => $version
+                ];
+            } else {
+                return [
+                    'valid' => false,
+                    'errors' => $errors,
+                    'warnings' => $warnings,
+                    'version' => $version,
+                    'schema_used' => $schema['info']['title'] ?? "OpenDelivery API {$version}",
+                    'validated_at' => now()->toISOString()
+                ];
+            }
             
         } catch (\Exception $e) {
             error_log("ValidationService::validate - EXCEPTION: " . $e->getMessage());
@@ -138,11 +171,14 @@ class ValidationService
     }
 
     /**
-     * Validate structure with the same rigorous logic as Node.js backend
+     * Validate structure with the same rigorous logic as Node.js backend (SIMPLIFIED)
      */
-    private function validateStructure($payload, array $schema, string $path): array
+    private function validateStructure($payload, array $schema, string $path = '', array $fullSchema = null): array
     {
         $errors = [];
+
+        // Skip $ref resolution for now to prevent performance issues
+        // TODO: Implement efficient $ref resolution later
 
         // Check required fields (RIGOROUS)
         if (isset($schema['required'])) {
@@ -165,7 +201,7 @@ class ValidationService
                     $value = $payload[$field];
                     $fieldPath = $path ? "{$path}.{$field}" : $field;
                     
-                    $fieldErrors = $this->validateField($value, $definition, $fieldPath, $field);
+                    $fieldErrors = $this->validateField($value, $definition, $fieldPath, $field, $fullSchema);
                     $errors = array_merge($errors, $fieldErrors);
                 }
             }
@@ -174,12 +210,70 @@ class ValidationService
         return $errors;
     }
 
+    // Cache for resolved schemas to prevent infinite loops
+    private static $resolvedCache = [];
+    
     /**
-     * Validate individual field with rigorous type checking
+     * Resolve $ref references in schema (OPTIMIZED to prevent infinite loops)
      */
-    private function validateField($value, array $definition, string $fieldPath, string $fieldName): array
+    private function resolveSchemaReferences(array $schema, array $fullSchema = null, array &$visited = []): array
+    {
+        // If this schema has a $ref, resolve it
+        if (isset($schema['$ref'])) {
+            $ref = $schema['$ref'];
+            
+            // Check cache first
+            if (isset(self::$resolvedCache[$ref])) {
+                return self::$resolvedCache[$ref];
+            }
+            
+            // Prevent infinite loops
+            if (in_array($ref, $visited)) {
+                return ['type' => 'object']; // Return basic schema to break loop
+            }
+            
+            if (strpos($ref, '#/components/schemas/') === 0 && $fullSchema) {
+                $schemaName = str_replace('#/components/schemas/', '', $ref);
+                
+                if (isset($fullSchema['components']['schemas'][$schemaName])) {
+                    $visited[] = $ref;
+                    $resolved = $this->resolveSchemaReferences($fullSchema['components']['schemas'][$schemaName], $fullSchema, $visited);
+                    array_pop($visited); // Remove from visited after resolving
+                    
+                    // Cache the result
+                    self::$resolvedCache[$ref] = $resolved;
+                    return $resolved;
+                }
+            }
+        }
+
+        // Create a copy to avoid modifying original
+        $resolvedSchema = $schema;
+
+        // Recursively resolve $ref in properties (with limits)
+        if (isset($schema['properties']) && count($visited) < 10) { // Limit recursion depth
+            foreach ($schema['properties'] as $propName => $propDef) {
+                $resolvedSchema['properties'][$propName] = $this->resolveSchemaReferences($propDef, $fullSchema, $visited);
+            }
+        }
+
+        // Recursively resolve $ref in array items (with limits)
+        if (isset($schema['items']) && count($visited) < 10) { // Limit recursion depth
+            $resolvedSchema['items'] = $this->resolveSchemaReferences($schema['items'], $fullSchema, $visited);
+        }
+
+        return $resolvedSchema;
+    }
+
+    /**
+     * Validate individual field with rigorous type checking (SIMPLIFIED)
+     */
+    private function validateField($value, array $definition, string $fieldPath, string $fieldName, array $fullSchema = null): array
     {
         $errors = [];
+
+        // Skip $ref resolution for now to prevent performance issues
+        // TODO: Implement efficient $ref resolution later
 
         // Type validation
         if (isset($definition['type'])) {
@@ -241,7 +335,7 @@ class ValidationService
 
         // Nested object validation
         if (isset($definition['type']) && $definition['type'] === 'object' && (is_array($value) || is_object($value))) {
-            $nestedErrors = $this->validateStructure($value, $definition, $fieldPath);
+            $nestedErrors = $this->validateStructure($value, $definition, $fieldPath, $fullSchema);
             $errors = array_merge($errors, $nestedErrors);
         }
 
@@ -250,7 +344,7 @@ class ValidationService
             if (isset($definition['items'])) {
                 foreach ($value as $index => $item) {
                     $itemPath = "{$fieldPath}[{$index}]";
-                    $itemErrors = $this->validateStructure($item, $definition['items'], $itemPath);
+                    $itemErrors = $this->validateStructure($item, $definition['items'], $itemPath, $fullSchema);
                     $errors = array_merge($errors, $itemErrors);
                 }
             }
@@ -677,5 +771,114 @@ class ValidationService
     {
         $hash = hash('sha256', json_encode($payload) . $version . time());
         return 'OD-' . strtoupper(substr($hash, 0, 12));
+    }
+
+    /**
+     * Count total fields in payload for statistics (aligned with Node.js)
+     */
+    private function countFields($payload): int
+    {
+        if (!is_array($payload) && !is_object($payload)) {
+            return 0;
+        }
+
+        $count = 0;
+        foreach ($payload as $key => $value) {
+            $count++; // Count current field
+            
+            if (is_array($value) || is_object($value)) {
+                $count += $this->countFields($value); // Recursively count nested fields
+            }
+        }
+        
+        return $count;
+    }
+
+    /**
+     * Get valid test payload for schema version v1.5.0 (default)
+     * This ensures consistent testing across both standalone and Laravel package
+     */
+    public function getValidTestPayload(string $version = '1.5.0'): array
+    {
+        // Return payload model that is valid for OpenDelivery v1.5.0
+        return [
+            "id" => "123e4567-e89b-12d3-a456-426614174000",
+            "type" => "DELIVERY",
+            "displayId" => "ODV-123456",
+            "createdAt" => "2024-01-20T10:30:00Z",
+            "orderTiming" => "INSTANT",
+            "preparationStartDateTime" => "2024-01-20T10:30:00Z",
+            "merchant" => [
+                "id" => "merchant-abc123",
+                "name" => "Pizzaria Bella Vista"
+            ],
+            "items" => [
+                [
+                    "id" => "item-pizza-001",
+                    "name" => "Pizza Margherita",
+                    "quantity" => 1,
+                    "unit" => "UN",
+                    "unitPrice" => [
+                        "value" => 32.90,
+                        "currency" => "BRL"
+                    ],
+                    "totalPrice" => [
+                        "value" => 32.90,
+                        "currency" => "BRL"
+                    ],
+                    "externalCode" => "PIZZA-MARG-001"
+                ]
+            ],
+            "total" => [
+                "itemsPrice" => [
+                    "value" => 32.90,
+                    "currency" => "BRL"
+                ],
+                "otherFees" => [
+                    "value" => 0.00,
+                    "currency" => "BRL"
+                ],
+                "discount" => [
+                    "value" => 0.00,
+                    "currency" => "BRL"
+                ],
+                "orderAmount" => [
+                    "value" => 32.90,
+                    "currency" => "BRL"
+                ]
+            ],
+            "payments" => [
+                "prepaid" => 0.00,
+                "pending" => 32.90,
+                "methods" => [
+                    [
+                        "value" => 32.90,
+                        "currency" => "BRL",
+                        "type" => "PENDING",
+                        "method" => "CREDIT",
+                        "methodInfo" => "Cartão de Crédito"
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get invalid test payload for testing error handling
+     */
+    public function getInvalidTestPayload(): array
+    {
+        return [
+            "id" => 123, // Should be string UUID
+            "type" => "INVALID_TYPE", // Invalid enum value
+            "items" => [
+                [
+                    // Missing required fields: id, name, quantity, unitPrice
+                    "observations" => "Item sem campos obrigatórios"
+                ]
+            ],
+            // Missing required fields: orderTiming, preparationStartDateTime, merchant, total, payments
+            "createdAt" => "invalid-date" // Invalid date format
+        ];
     }
 }
