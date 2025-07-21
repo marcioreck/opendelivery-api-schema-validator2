@@ -1,0 +1,60 @@
+{
+  "id": "123e4567-e89b-12d3-a456-426614174003",
+  "type": "INVALID_SERVICE_TYPE",
+  "displayId": "ODV-123456",
+  "createdAt": "2024-01-20T10:30:00Z",
+  "orderTiming": "INVALID_TIMING",
+  "preparationStartDateTime": "2024-01-20T10:30:00Z",
+  "merchant": {
+    "id": "merchant-abc123",
+    "name": "Pizzaria Bella Vista"
+  },
+  "items": [
+    {
+      "id": "item-pizza-001",
+      "name": "Pizza Margherita",
+      "quantity": 1,
+      "unit": "INVALID_UNIT",
+      "unitPrice": {
+        "value": 32.90,
+        "currency": "INVALID_CURRENCY"
+      },
+      "totalPrice": {
+        "value": 32.90,
+        "currency": "BRL"
+      },
+      "externalCode": "PIZZA-MARG-001"
+    }
+  ],
+  "total": {
+    "itemsPrice": {
+      "value": 32.90,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 32.90,
+      "currency": "BRL"
+    }
+  },
+  "payments": {
+    "prepaid": 0.00,
+    "pending": 32.90,
+    "methods": [
+      {
+        "value": 32.90,
+        "currency": "BRL",
+        "type": "INVALID_PAYMENT_TYPE",
+        "method": "INVALID_METHOD",
+        "methodInfo": "Cartão de Crédito"
+      }
+    ]
+  }
+}

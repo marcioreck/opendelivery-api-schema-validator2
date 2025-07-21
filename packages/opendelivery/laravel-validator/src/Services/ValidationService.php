@@ -8,6 +8,7 @@ use JsonSchema\SchemaStorage;
 use JsonSchema\Uri\UriRetriever;
 use JsonSchema\Uri\UriResolver;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Yaml\Yaml;
 
 class ValidationService
 {
@@ -23,13 +24,58 @@ class ValidationService
     }
 
     /**
+     * Get the path to schema file
+     */
+    public function getSchemaPath(string $version = null): string
+    {
+        return $this->schemaManager->getSchemaPath($version);
+    }
+
+    /**
+     * Get all available schema versions
+     */
+    public function getAvailableVersions(): array
+    {
+        return $this->schemaManager->getAvailableVersions();
+    }
+
+    /**
+     * Get the default schema version
+     */
+    public function getDefaultVersion(): string
+    {
+        return $this->schemaManager->getDefaultVersion();
+    }
+
+    /**
+     * Check if a schema version exists
+     */
+    public function hasVersion(string $version): bool
+    {
+        return $this->schemaManager->hasVersion($version);
+    }
+
+    /**
+     * Get schema info (metadata)
+     */
+    public function getSchemaInfo(string $version): array
+    {
+        return $this->schemaManager->getSchemaInfo($version);
+    }
+
+    /**
      * Validate a payload against a specific schema version
      */
     public function validate($payload, string $version): array
     {
+        error_log("ValidationService::validate - START for version: " . $version);
         try {
+            error_log("ValidationService::validate - Getting schema path");
             $schemaPath = $this->getSchemaPath($version);
+            error_log("ValidationService::validate - Schema path: " . $schemaPath);
+            
             if (!file_exists($schemaPath)) {
+                error_log("ValidationService::validate - ERROR: Schema file not found");
                 return [
                     'valid' => false,
                     'errors' => ["Schema file not found for version {$version}"],
@@ -37,29 +83,39 @@ class ValidationService
                 ];
             }
 
+            error_log("ValidationService::validate - Parsing YAML file");
             $openApiSpec = Yaml::parseFile($schemaPath);
+            error_log("ValidationService::validate - YAML parsed, extracting JSON schema");
             
             // Extract JSON Schema from OpenAPI spec
             $jsonSchema = $this->extractJsonSchemaFromOpenApi($openApiSpec);
+            error_log("ValidationService::validate - JSON schema extracted");
             
             // Validate payload against schema
+            error_log("ValidationService::validate - Creating validator");
             $validator = new Validator();
             
             // Convert payload to object if it's an array
+            error_log("ValidationService::validate - Converting payload");
             $payloadObject = json_decode(json_encode($payload));
             
             // Convert schema to object format expected by validator
+            error_log("ValidationService::validate - Converting schema");
             $schemaObject = json_decode(json_encode($jsonSchema));
             
+            error_log("ValidationService::validate - Running validation");
             $validator->validate($payloadObject, $schemaObject);
+            error_log("ValidationService::validate - Validation completed");
             
             $errors = [];
             if (!$validator->isValid()) {
+                error_log("ValidationService::validate - Validation failed, processing errors");
                 foreach ($validator->getErrors() as $error) {
                     $errors[] = sprintf("[%s] %s", $error['property'], $error['message']);
                 }
             }
 
+            error_log("ValidationService::validate - Returning result");
             return [
                 'valid' => $validator->isValid(),
                 'errors' => $errors,
@@ -72,6 +128,7 @@ class ValidationService
                 ]
             ];
         } catch (\Exception $e) {
+            error_log("ValidationService::validate - EXCEPTION: " . $e->getMessage());
             return [
                 'valid' => false,
                 'errors' => ['Validation error: ' . $e->getMessage()],
@@ -90,39 +147,56 @@ class ValidationService
      */
     public function checkCompatibility($payload, $fromVersion = null, $toVersion = null): array
     {
+        error_log("ValidationService::checkCompatibility - START");
         try {
+            error_log("ValidationService::checkCompatibility - Getting available versions");
             $versions = $this->getAvailableVersions();
+            error_log("ValidationService::checkCompatibility - Found versions: " . implode(', ', $versions));
+            
             $compatibleVersions = [];
             $errors = [];
 
+            error_log("ValidationService::checkCompatibility - Starting version loop");
             foreach ($versions as $version) {
+                error_log("ValidationService::checkCompatibility - Testing version: " . $version);
+                
                 // Skip versions that don't match the from/to filters
                 if ($fromVersion && version_compare($version, $fromVersion, '<')) {
+                    error_log("ValidationService::checkCompatibility - Skipping $version (before $fromVersion)");
                     continue;
                 }
                 if ($toVersion && version_compare($version, $toVersion, '>')) {
+                    error_log("ValidationService::checkCompatibility - Skipping $version (after $toVersion)");
                     continue;
                 }
 
                 try {
+                    error_log("ValidationService::checkCompatibility - Validating against version: " . $version);
                     $validationResult = $this->validate($payload, $version);
+                    error_log("ValidationService::checkCompatibility - Validation completed for $version, valid: " . ($validationResult['valid'] ? 'true' : 'false'));
+                    
                     if ($validationResult['valid']) {
                         $compatibleVersions[] = $version;
                     } else {
                         $errors[$version] = $validationResult['errors'];
                     }
                 } catch (\Exception $e) {
+                    error_log("ValidationService::checkCompatibility - Exception for version $version: " . $e->getMessage());
                     $errors[$version] = ['Schema validation error: ' . $e->getMessage()];
                 }
             }
 
+            error_log("ValidationService::checkCompatibility - Version loop completed");
+            
             // If no compatible versions found, let's try a more lenient approach
             if (empty($compatibleVersions)) {
+                error_log("ValidationService::checkCompatibility - No compatible versions found, checking basic structure");
                 // Check if the payload has the basic structure of an OpenDelivery order
                 if ($this->hasBasicOrderStructure($payload)) {
                     // Try to find the most suitable version based on payload features
                     $suggestedVersion = $this->suggestVersionBasedOnPayload($payload);
                     if ($suggestedVersion) {
+                        error_log("ValidationService::checkCompatibility - Returning suggestion: " . $suggestedVersion);
                         return [
                             'compatible' => false,
                             'versions' => [],
@@ -134,6 +208,7 @@ class ValidationService
                 }
             }
 
+            error_log("ValidationService::checkCompatibility - Returning final result");
             return [
                 'compatible' => !empty($compatibleVersions),
                 'versions' => $compatibleVersions,
@@ -143,6 +218,7 @@ class ValidationService
                     : '✅ Payload is compatible with OpenDelivery versions: ' . implode(', ', $compatibleVersions)
             ];
         } catch (\Exception $e) {
+            error_log("ValidationService::checkCompatibility - EXCEPTION: " . $e->getMessage());
             return [
                 'compatible' => false,
                 'versions' => [],

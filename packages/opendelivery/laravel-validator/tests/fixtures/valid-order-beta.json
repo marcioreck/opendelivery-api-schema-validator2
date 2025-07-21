@@ -1,0 +1,76 @@
+{
+  "id": "789e0123-f45g-67h8-i901-234567890123",
+  "type": "DELIVERY",
+  "displayId": "BETA-001",
+  "createdAt": "2024-02-01T12:00:00Z",
+  "orderTiming": "SCHEDULED",
+  "preparationStartDateTime": "2024-02-01T18:00:00Z",
+  "merchant": {
+    "id": "beta-merchant-001",
+    "name": "Beta Test Restaurant",
+    "location": {
+      "address": "Rua Beta, 123",
+      "coordinates": {
+        "lat": -23.5505,
+        "lng": -46.6333
+      }
+    }
+  },
+  "items": [
+    {
+      "id": "beta-item-001",
+      "name": "Beta Test Dish",
+      "quantity": 1,
+      "unit": "UNIT",
+      "unitPrice": {
+        "value": 25.90,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 25.90,
+        "currency": "BRL"
+      },
+      "externalCode": "BETA-001",
+      "metadata": {
+        "experimental_feature": true,
+        "beta_version": "2.0"
+      }
+    }
+  ],
+  "total": {
+    "itemsPrice": {
+      "value": 25.90,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 25.90,
+      "currency": "BRL"
+    }
+  },
+  "payments": {
+    "prepaid": 25.90,
+    "pending": 0.00,
+    "methods": [
+      {
+        "value": 25.90,
+        "currency": "BRL",
+        "type": "PREPAID",
+        "method": "DIGITAL_WALLET",
+        "methodInfo": "Beta Digital Wallet"
+      }
+    ]
+  },
+  "betaFeatures": {
+    "realTimeTracking": true,
+    "aiRecommendations": true,
+    "advancedAnalytics": true
+  }
+}

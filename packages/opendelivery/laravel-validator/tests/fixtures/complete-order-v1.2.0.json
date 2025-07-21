@@ -1,0 +1,84 @@
+{
+  "id": "123e4567-e89b-12d3-a456-426614174001",
+  "type": "DELIVERY",
+  "displayId": "ODV-123457",
+  "createdAt": "2024-01-20T10:35:00Z",
+  "orderTiming": "INSTANT",
+  "preparationStartDateTime": "2024-01-20T10:35:00Z",
+  "merchant": {
+    "id": "merchant-def456",
+    "name": "Hamburgueria do Centro"
+  },
+  "items": [
+    {
+      "id": "item-combo-001",
+      "name": "Combo Especial",
+      "quantity": 2,
+      "unit": "UN",
+      "unitPrice": {
+        "value": 28.90,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 57.80,
+        "currency": "BRL"
+      },
+      "externalCode": "COMBO-ESP-001"
+    },
+    {
+      "id": "item-bebida-001",
+      "name": "Refrigerante Lata",
+      "quantity": 2,
+      "unit": "UN",
+      "unitPrice": {
+        "value": 4.50,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 9.00,
+        "currency": "BRL"
+      },
+      "externalCode": "REFRI-LATA-001"
+    }
+  ],
+  "total": {
+    "itemsPrice": {
+      "value": 66.80,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 8.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 74.80,
+      "currency": "BRL"
+    }
+  },
+  "payments": {
+    "prepaid": 0.00,
+    "pending": 74.80,
+    "methods": [
+      {
+        "value": 74.80,
+        "currency": "BRL",
+        "type": "PENDING",
+        "method": "CREDIT",
+        "methodInfo": "Cartão de Crédito"
+      }
+    ]
+  },
+  "customer": {
+    "id": "customer-ghi789",
+    "name": "João Silva",
+    "phone": {
+      "number": "11987654321"
+    },
+    "documentNumber": "12345678901",
+    "ordersCountOnMerchant": 5
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "type": "DELIVERY",
+  "displayId": "ODV-123456",
+  "createdAt": "2024-01-20T10:30:00Z",
+  "orderTiming": "INSTANT",
+  "preparationStartDateTime": "2024-01-20T10:30:00Z",
+  "merchant": {
+    "id": "merchant-abc123",
+    "name": "Pizzaria Bella Vista"
+  },
+  "customer": {
+    "id": "customer-123",
+    "name": "João Silva",
+    "phone": {
+      "number": "11987654321"
+    },
+    "documentNumber": "12345678901",
+    "ordersCountOnMerchant": 1
+  },
+  "items": [
+    {
+      "id": "item-pizza-001",
+      "name": "Pizza Margherita",
+      "quantity": 1,
+      "unit": "UNIT",
+      "unitPrice": {
+        "value": 32.90,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 32.90,
+        "currency": "BRL"
+      },
+      "externalCode": "PIZZA-MARG-001"
+    }
+  ],
+  "total": {
+    "items": {
+      "value": 32.90,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 32.90,
+      "currency": "BRL"
+    }
+  },
+  "payments": {
+    "prepaid": 0.00,
+    "pending": 32.90,
+    "methods": [
+      {
+        "value": 32.90,
+        "currency": "BRL",
+        "type": "PENDING",
+        "method": "CREDIT",
+        "methodInfo": "Cartão de Crédito"
+      }
+    ]
+  }
+}

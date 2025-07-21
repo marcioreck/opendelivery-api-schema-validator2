@@ -3,11 +3,13 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | OpenDelivery API Schema Validator Configuration
+    | Default Schema Version
     |--------------------------------------------------------------------------
+    |
+    | The default OpenDelivery API schema version to use when none is specified.
+    |
     */
-
-    'default_schema_version' => '1.6.0-rc',
+    'default_schema_version' => '1.5.0',
 
     'supported_versions' => [
         '1.0.0',

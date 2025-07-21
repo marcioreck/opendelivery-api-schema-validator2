@@ -15,9 +15,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Base CSS -->
-    <link href="{{ asset('vendor/opendelivery/css/app.css') }}" rel="stylesheet">
-    
     <!-- Additional CSS -->
     @yield('styles')
     

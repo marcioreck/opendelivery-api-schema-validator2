@@ -1,0 +1,34 @@
+{
+  "id": 123,
+  "type": "INVALID_TYPE",
+  "displayId": "ODV-123456",
+  "createdAt": "invalid-date",
+  "orderTiming": "INVALID_TIMING",
+  "preparationStartDateTime": "2024-01-20T10:30:00Z",
+  "merchant": {
+    "id": "merchant-abc123",
+    "name": 123
+  },
+  "items": [
+    {
+      "id": "item-001",
+      "name": 123,
+      "quantity": "1",
+      "unit": 123,
+      "unitPrice": "10.90",
+      "totalPrice": "10.90",
+      "externalCode": "ITEM-001"
+    }
+  ],
+  "total": {
+    "itemsPrice": "15.90",
+    "otherFees": "0.00",
+    "discount": "0.00",
+    "orderAmount": "15.90"
+  },
+  "payments": {
+    "prepaid": "0.00",
+    "pending": "15.90",
+    "methods": "invalid"
+  }
+}

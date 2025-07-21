@@ -35,6 +35,15 @@ class SchemaManager
     }
 
     /**
+     * Get the path to a specific schema file
+     */
+    public function getSchemaPath(string $version = null): string
+    {
+        $version = $version ?? $this->getDefaultVersion();
+        return $this->schemasPath . "/{$version}.yaml";
+    }
+
+    /**
      * Load a specific schema version
      */
     public function loadSchema(string $version): array
@@ -71,7 +80,7 @@ class SchemaManager
      */
     public function getDefaultVersion(): string
     {
-        return config('opendelivery.default_schema_version', '1.6.0-rc');
+        return config('opendelivery.default_schema_version', '1.5.0');
     }
 
     /**

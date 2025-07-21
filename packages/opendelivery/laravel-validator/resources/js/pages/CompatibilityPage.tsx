@@ -1,431 +1,445 @@
-// OpenDelivery API Schema Validator 2 - Compatibility Page
-
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
+  Paper,
   Typography,
-  Button,
-  Select,
-  MenuItem,
   FormControl,
   InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Alert,
   CircularProgress,
   Chip,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
+  Divider,
   Grid,
-  Paper,
-  Link,
 } from '@mui/material';
-import {
-  ExpandMore as ExpandMoreIcon,
-  Error as ErrorIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-  Compare as CompareIcon,
-  Refresh as RefreshIcon,
-  Add as AddIcon,
-  Remove as RemoveIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
 import MonacoEditor from '../components/MonacoEditor';
-import type { CompatibilityResult, SchemaVersion } from '@/types';
-import { checkCompatibility, getSchemaVersions, formatValidationError } from '@/utils/api';
+import { checkCompatibility } from '../utils/api';
+import TestPayloads from '../components/TestPayloads';
 
-const CompatibilityPage: React.FC = () => {
-  const [fromVersion, setFromVersion] = useState('');
-  const [toVersion, setToVersion] = useState('');
-  const [payload, setPayload] = useState('');
-  const [result, setResult] = useState<CompatibilityResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [versions, setVersions] = useState<SchemaVersion[]>([]);
-  const [isChecking, setIsChecking] = useState(false);
-  const [includePayload, setIncludePayload] = useState(false);
+const SCHEMA_VERSIONS = ['1.0.0', '1.0.1', '1.1.0', '1.1.1', '1.2.0', '1.2.1', '1.3.0', '1.4.0', '1.5.0', '1.6.0-rc', 'beta'];
 
-  // Load schema versions
-  useEffect(() => {
-    const loadVersions = async () => {
-      try {
-        const schemaVersions = await getSchemaVersions();
-        setVersions(schemaVersions);
-      } catch (err) {
-        console.error('Failed to load schema versions:', err);
+// Payload básico que é compatível com v1.5.0+
+const INITIAL_PAYLOAD = {
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "type": "DELIVERY",
+  "displayId": "ODV-123456",
+  "createdAt": "2024-01-20T10:30:00Z",
+  "orderTiming": "INSTANT",
+  "preparationStartDateTime": "2024-01-20T10:30:00Z",
+  "merchant": {
+    "id": "merchant-abc123",
+    "name": "Pizzaria Bella Vista"
+  },
+  "items": [
+    {
+      "id": "item-pizza-001",
+      "name": "Pizza Margherita",
+      "quantity": 1,
+      "unit": "UN",
+      "unitPrice": {
+        "value": 32.90,
+        "currency": "BRL"
+      },
+      "totalPrice": {
+        "value": 32.90,
+        "currency": "BRL"
+      },
+      "externalCode": "PIZZA-MARG-001"
+    }
+  ],
+  "total": {
+    "itemsPrice": {
+      "value": 32.90,
+      "currency": "BRL"
+    },
+    "otherFees": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "discount": {
+      "value": 0.00,
+      "currency": "BRL"
+    },
+    "orderAmount": {
+      "value": 32.90,
+      "currency": "BRL"
+    }
+  },
+  "payments": {
+    "prepaid": 0.00,
+    "pending": 32.90,
+    "methods": [
+      {
+        "value": 32.90,
+        "currency": "BRL",
+        "type": "PENDING",
+        "method": "CREDIT",
+        "methodInfo": "Cartão de Crédito"
       }
-    };
-    
-    loadVersions();
-  }, []);
+    ]
+  }
+};
 
-  // Handle compatibility check
-  const handleCompatibilityCheck = useCallback(async () => {
-    if (!fromVersion || !toVersion) {
-      setError('Please select both source and target versions');
-      return;
-    }
+export default function CompatibilityPage() {
+  const [sourceVersion, setSourceVersion] = useState<string>('1.0.0');
+  const [targetVersion, setTargetVersion] = useState<string>('1.5.0');
+  const [payload, setPayload] = useState<string>(JSON.stringify(INITIAL_PAYLOAD, null, 2));
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
 
-    if (fromVersion === toVersion) {
-      setError('Source and target versions cannot be the same');
-      return;
-    }
-
-    setIsChecking(true);
-    setError(null);
-    setResult(null);
-
+  const handleCompatibilityCheck = async () => {
     try {
-      const compatibilityResult = await checkCompatibility({
-        fromVersion,
-        toVersion,
-        payload: includePayload && payload ? JSON.parse(payload) : undefined,
-      });
-
-      setResult(compatibilityResult);
-    } catch (err: any) {
-      setError(formatValidationError(err));
+      setLoading(true);
+      setError('');
+      
+      const parsedPayload = JSON.parse(payload);
+      const response = await checkCompatibility(sourceVersion, targetVersion, parsedPayload);
+      
+      setResult(response);
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        setError('Payload JSON inválido. Por favor, verifique a sintaxe.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Erro desconhecido ao verificar compatibilidade');
+      }
     } finally {
-      setIsChecking(false);
+      setLoading(false);
     }
-  }, [fromVersion, toVersion, payload, includePayload]);
+  };
 
-  // Clear results
-  const clearResults = useCallback(() => {
-    setResult(null);
-    setError(null);
-  }, []);
+  const handlePayloadSelect = (selectedPayload: any) => {
+    setPayload(JSON.stringify(selectedPayload, null, 2));
+  };
 
-  // Get impact color
-  const getImpactColor = (impact: string) => {
-    switch (impact) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'info';
-      default: return 'default';
+  const isValidJson = (str: string): boolean => {
+    try {
+      JSON.parse(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const getCompatibilityStatusColor = (compatible: boolean) => {
+    return compatible ? 'success' : 'error';
+  };
+
+  const getCompatibilityStatusText = (compatible: boolean) => {
+    return compatible ? 'Compatível' : 'Incompatível';
+  };
+
+  const getCompatibilityLevelText = (level: string) => {
+    switch (level) {
+      case 'fully_compatible':
+        return 'Totalmente Compatível';
+      case 'upgraded_compatibility':
+        return 'Compatibilidade Melhorada';
+      case 'partially_compatible':
+        return 'Parcialmente Compatível';
+      case 'regression':
+        return 'Regressão';
+      case 'same_issues':
+        return 'Mesmos Problemas';
+      default:
+        return 'Incompatível';
+    }
+  };
+
+  const getCompatibilityLevelColor = (level: string) => {
+    switch (level) {
+      case 'fully_compatible':
+        return 'success';
+      case 'upgraded_compatibility':
+        return 'info';
+      case 'partially_compatible':
+        return 'warning';
+      case 'regression':
+        return 'error';
+      case 'same_issues':
+        return 'warning';
+      default:
+        return 'error';
     }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2">
-          <strong>OpenDelivery API Schema Validator 2</strong> - Ferramenta para validação, compatibilidade e certificação de implementações da API OpenDelivery. 
-          Desenvolvido por{' '}
-          <Link href="https://fazmercado.com" target="_blank" rel="noopener noreferrer" color="primary">
-            Márcio Reck
-          </Link>
-          {' '} | {' '}
-          <Link href="https://github.com/marcioreck/opendelivery-api-schema-validator2" target="_blank" rel="noopener noreferrer" color="primary">
-            GitHub
-          </Link>
-          {' '} | {' '}
-          <Link href="https://www.opendelivery.com.br/" target="_blank" rel="noopener noreferrer" color="primary">
-            OpenDelivery API
-          </Link>
-        </Typography>
-      </Alert>
-      
       <Typography variant="h4" gutterBottom>
-        Verificador de Compatibilidade
+        Verificador de Compatibilidade entre Versões
       </Typography>
       
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        Check compatibility between different OpenDelivery API Schema Validator 2 versions
+      <Typography variant="body1" sx={{ mb: 3 }}>
+        Verifique se um payload é compatível entre diferentes versões do esquema OpenDelivery.
+        Você pode comparar versões diferentes ou usar versões iguais para validar um payload específico.
       </Typography>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>From Version</InputLabel>
-                <Select
-                  value={fromVersion}
-                  onChange={(e) => setFromVersion(e.target.value)}
-                  label="From Version"
-                >
-                  {versions.map((v) => (
-                    <MenuItem key={v.version} value={v.version}>
-                      {v.version} - {v.name}
-                      {v.isDefault && <Chip label="Default" size="small" sx={{ ml: 1 }} />}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+      <Grid container spacing={3}>
+        {/* Configuração */}
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Configuração
+            </Typography>
             
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel>To Version</InputLabel>
-                <Select
-                  value={toVersion}
-                  onChange={(e) => setToVersion(e.target.value)}
-                  label="To Version"
-                >
-                  {versions.map((v) => (
-                    <MenuItem key={v.version} value={v.version}>
-                      {v.version} - {v.name}
-                      {v.isDefault && <Chip label="Default" size="small" sx={{ ml: 1 }} />}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ display: 'flex', gap: 1, height: '100%', alignItems: 'center' }}>
-                <Button
-                  variant="contained"
-                  startIcon={<CompareIcon />}
-                  onClick={handleCompatibilityCheck}
-                  disabled={isChecking}
-                  sx={{ minWidth: 120 }}
-                >
-                  {isChecking ? <CircularProgress size={20} /> : 'Check'}
-                </Button>
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={clearResults}
-                  disabled={isChecking}
-                >
-                  Clear
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Versão de Origem</InputLabel>
+              <Select
+                value={sourceVersion}
+                onChange={(e) => setSourceVersion(e.target.value)}
+                label="Versão de Origem"
+              >
+                {SCHEMA_VERSIONS.map((version) => (
+                  <MenuItem key={version} value={version}>
+                    {version}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          {includePayload && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Test Payload (Optional)
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Versão de Destino</InputLabel>
+              <Select
+                value={targetVersion}
+                onChange={(e) => setTargetVersion(e.target.value)}
+                label="Versão de Destino"
+              >
+                {SCHEMA_VERSIONS.map((version) => (
+                  <MenuItem key={version} value={version}>
+                    {version}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="contained"
+              onClick={handleCompatibilityCheck}
+              disabled={loading || !isValidJson(payload)}
+              fullWidth
+              sx={{ mb: 2 }}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Verificar Compatibilidade'}
+            </Button>
+
+            {sourceVersion === targetVersion && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Verificando compatibilidade na mesma versão ({sourceVersion}). Isso validará se o payload é válido para esta versão específica.
+              </Alert>
+            )}
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Exemplos de Payload:
               </Typography>
-              
+              <TestPayloads onSelectPayload={handlePayloadSelect} />
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Editor */}
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 2, mb: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Payload para Teste
+            </Typography>
+            
+            <Box sx={{ height: 400, border: '1px solid #ddd', borderRadius: 1 }}>
               <MonacoEditor
-                value={payload}
-                onChange={setPayload}
+                height="400px"
                 language="json"
-                height={300}
+                value={payload}
+                onChange={(value) => setPayload(value || '')}
                 options={{
                   minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  fontSize: 14,
                   wordWrap: 'on',
-                  lineNumbers: 'on',
-                  folding: true,
+                  automaticLayout: true,
                 }}
               />
-            </>
-          )}
-
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setIncludePayload(!includePayload)}
-            >
-              {includePayload ? 'Hide' : 'Show'} Payload Testing
-            </Button>
+            </Box>
             
-            {includePayload && (
-              <Typography variant="body2" color="text.secondary">
-                Include a JSON payload to test compatibility with actual data
-              </Typography>
+            {!isValidJson(payload) && (
+              <Alert severity="error" sx={{ mt: 1 }}>
+                JSON inválido. Por favor, corrija a sintaxe.
+              </Alert>
             )}
-          </Box>
-        </CardContent>
-      </Card>
+          </Paper>
+        </Grid>
+      </Grid>
 
+      {/* Erro */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
 
+      {/* Resultado */}
       {result && (
-        <Card>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-              <Typography variant="h6">
-                Compatibility Result
-              </Typography>
-              
-              <Chip
-                label={result.compatible ? 'Compatible' : 'Not Compatible'}
-                color={result.compatible ? 'success' : 'error'}
-                icon={result.compatible ? <CheckCircleIcon /> : <ErrorIcon />}
-              />
-              
-              <Typography variant="body2" color="text.secondary">
-                {result.fromVersion} → {result.toVersion}
-              </Typography>
-            </Box>
-
-            <Grid container spacing={3}>
-              {/* Summary Cards */}
-              <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
-                  <Typography variant="h3" color="error.main">
-                    {result.breakingChanges.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Breaking Changes
-                  </Typography>
-                </Paper>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
-                  <Typography variant="h3" color="warning.main">
-                    {result.deprecatedFields.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Deprecated Fields
-                  </Typography>
-                </Paper>
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <Paper sx={{ p: 2, textAlign: 'center' }}>
-                  <Typography variant="h3" color="info.main">
-                    {result.newFields.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    New Fields
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-
-            {/* Breaking Changes */}
-            {result.breakingChanges.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Accordion>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ErrorIcon color="error" />
-                      Breaking Changes ({result.breakingChanges.length})
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <List>
-                      {result.breakingChanges.map((change, index) => (
-                        <ListItem key={index}>
-                          <ListItemIcon>
-                            <Chip
-                              label={change.impact.toUpperCase()}
-                              color={getImpactColor(change.impact)}
-                              size="small"
-                            />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={change.description}
-                            secondary={`Field: ${change.field} | Type: ${change.type}`}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </AccordionDetails>
-                </Accordion>
-              </Box>
-            )}
-
-            {/* Deprecated Fields */}
-            {result.deprecatedFields.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Accordion>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <WarningIcon color="warning" />
-                      Deprecated Fields ({result.deprecatedFields.length})
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <List>
-                      {result.deprecatedFields.map((field, index) => (
-                        <ListItem key={index}>
-                          <ListItemIcon>
-                            <RemoveIcon color="warning" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={field.message}
-                            secondary={
-                              <Box>
-                                <Typography variant="body2" component="span">
-                                  Field: {field.field}
-                                </Typography>
-                                {field.replacement && (
-                                  <Typography variant="body2" component="span" sx={{ ml: 2 }}>
-                                    Use: {field.replacement}
-                                  </Typography>
-                                )}
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </AccordionDetails>
-                </Accordion>
-              </Box>
-            )}
-
-            {/* New Fields */}
-            {result.newFields.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Accordion>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                    <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AddIcon color="info" />
-                      New Fields ({result.newFields.length})
-                    </Typography>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    <List>
-                      {result.newFields.map((field, index) => (
-                        <ListItem key={index}>
-                          <ListItemIcon>
-                            <AddIcon color="info" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={field.description}
-                            secondary={
-                              <Box>
-                                <Typography variant="body2" component="span">
-                                  Field: {field.field} | Type: {field.type}
-                                </Typography>
-                                {field.required && (
-                                  <Chip label="Required" color="error" size="small" sx={{ ml: 1 }} />
-                                )}
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </AccordionDetails>
-                </Accordion>
-              </Box>
-            )}
-
-            {/* Success Message */}
-            {result.compatible && result.breakingChanges.length === 0 && (
-              <Alert severity="success" sx={{ mt: 3 }}>
-                <Typography variant="body1">
-                  🎉 Perfect compatibility! No breaking changes detected between versions {result.fromVersion} and {result.toVersion}.
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Resultado da Verificação
+          </Typography>
+          
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Status de Compatibilidade
                 </Typography>
+                <Chip 
+                  label={getCompatibilityStatusText(result.compatible)}
+                  color={getCompatibilityStatusColor(result.compatible)}
+                  size="large"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Nível de Compatibilidade
+                </Typography>
+                <Chip 
+                  label={getCompatibilityLevelText(result.compatibility_level)}
+                  color={getCompatibilityLevelColor(result.compatibility_level)}
+                  size="large"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <Box sx={{ textAlign: 'center', p: 2, border: '1px solid #ddd', borderRadius: 1 }}>
+                <Typography variant="body2" color="textSecondary">
+                  Versões Comparadas
+                </Typography>
+                <Typography variant="h6" sx={{ mt: 1 }}>
+                  {result.details?.source_version} → {result.details?.target_version}
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+
+          {result.recommendations && result.recommendations.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Recomendações
+              </Typography>
+              {result.recommendations.map((recommendation: string, index: number) => (
+                <Alert key={index} severity="info" sx={{ mb: 1 }}>
+                  {recommendation}
+                </Alert>
+              ))}
+            </Box>
+          )}
+
+          {result.changes && result.changes.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Alterações Identificadas
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Tipo</TableCell>
+                      <TableCell>Caminho</TableCell>
+                      <TableCell>Descrição</TableCell>
+                      <TableCell>Severidade</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.changes.map((change: any, index: number) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Chip 
+                            label={change.type} 
+                            size="small" 
+                            color={change.type === 'new_error' ? 'error' : change.type === 'fixed_error' ? 'success' : 'default'}
+                          />
+                        </TableCell>
+                        <TableCell>{change.path}</TableCell>
+                        <TableCell>{change.description}</TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={change.severity} 
+                            size="small"
+                            color={change.severity === 'high' ? 'error' : change.severity === 'medium' ? 'warning' : 'default'}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="h6" gutterBottom>
+            Detalhes da Validação
+          </Typography>
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" gutterBottom>
+                Validação na Versão de Origem ({result.details?.source_version})
+              </Typography>
+              <Alert 
+                severity={result.details?.source_validation?.valid ? 'success' : 'error'}
+                sx={{ mb: 1 }}
+              >
+                {result.details?.source_validation?.valid 
+                  ? 'Payload válido na versão de origem' 
+                  : 'Payload inválido na versão de origem'}
               </Alert>
-            )}
-          </CardContent>
-        </Card>
+              {result.details?.source_validation?.errors && result.details.source_validation.errors.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  {result.details.source_validation.errors.map((error: any, index: number) => (
+                    <Alert key={index} severity="error" sx={{ mb: 1 }}>
+                      {error.path ? `${error.path}: ${error.message}` : error.message}
+                    </Alert>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle2" gutterBottom>
+                Validação na Versão de Destino ({result.details?.target_version})
+              </Typography>
+              <Alert 
+                severity={result.details?.target_validation?.valid ? 'success' : 'error'}
+                sx={{ mb: 1 }}
+              >
+                {result.details?.target_validation?.valid 
+                  ? 'Payload válido na versão de destino' 
+                  : 'Payload inválido na versão de destino'}
+              </Alert>
+              {result.details?.target_validation?.errors && result.details.target_validation.errors.length > 0 && (
+                <Box sx={{ mt: 1 }}>
+                  {result.details.target_validation.errors.map((error: any, index: number) => (
+                    <Alert key={index} severity="error" sx={{ mb: 1 }}>
+                      {error.path ? `${error.path}: ${error.message}` : error.message}
+                    </Alert>
+                  ))}
+                </Box>
+              )}
+            </Grid>
+          </Grid>
+        </Paper>
       )}
     </Box>
   );
-};
-
-export default CompatibilityPage;
+} 

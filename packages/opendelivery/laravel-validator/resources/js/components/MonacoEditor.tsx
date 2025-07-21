@@ -62,17 +62,31 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
 
   // Handle editor mount
   const handleEditorDidMount = (editor: any, monaco: any) => {
+    console.debug('[MonacoEditor] Editor mounted successfully', { 
+      editorVersion: monaco.version, 
+      language,
+      hasEditor: !!editor 
+    });
+    
     editorRef.current = editor;
     
     // Configure JSON language
     if (language === 'json') {
-      monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-        validate: true,
-        allowComments: false,
-        schemas: [],
-        enableSchemaRequest: false,
-      });
+      console.debug('[MonacoEditor] Configuring JSON language settings');
+      try {
+        monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+          validate: true,
+          allowComments: false,
+          schemas: [],
+          enableSchemaRequest: false,
+        });
+        console.debug('[MonacoEditor] JSON language configured successfully');
+      } catch (error) {
+        console.error('[MonacoEditor] Error configuring JSON language:', error);
+      }
     }
+    
+    console.debug('[MonacoEditor] Editor initialization complete');
   };
 
   // Handle value change
@@ -231,6 +245,18 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
           onMount={handleEditorDidMount}
           options={defaultOptions}
           theme="vs-light"
+          beforeMount={(monaco) => {
+            console.debug('[MonacoEditor] Before mount - Monaco loaded', { 
+              monacoVersion: monaco.version,
+              language 
+            });
+          }}
+          onValidate={(markers) => {
+            console.debug('[MonacoEditor] Validation markers received', { 
+              markersCount: markers.length,
+              markers: markers.length > 0 ? markers : undefined
+            });
+          }}
           loading={
             <Box sx={{ 
               display: 'flex', 
@@ -239,7 +265,8 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
               height: '100%',
               color: 'text.secondary',
             }}>
-              Loading Monaco Editor...
+              <span>Loading Monaco Editor...</span>
+              {console.debug('[MonacoEditor] Showing loading indicator')}
             </Box>
           }
         />
