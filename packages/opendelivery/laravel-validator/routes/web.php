@@ -2,13 +2,44 @@
 
 use Illuminate\Support\Facades\Route;
 use OpenDelivery\LaravelValidator\Controllers\ValidateController;
+use OpenDelivery\LaravelValidator\Http\Middleware\CorsMiddleware;
 
 // Main routes with opendelivery-api-schema-validator2 prefix
 Route::prefix('opendelivery-api-schema-validator2')->group(function () {
-    // API Endpoints
-    Route::post('/validate', [ValidateController::class, 'validate'])->name('opendelivery.validate');
-    Route::post('/compatibility', [ValidateController::class, 'compatibility'])->name('opendelivery.compatibility');
-    Route::post('/certify', [ValidateController::class, 'certify'])->name('opendelivery.certify');
+    // API Endpoints with CORS support
+    Route::middleware([CorsMiddleware::class])->group(function () {
+        Route::post('/validate', [ValidateController::class, 'validate'])->name('opendelivery.validate');
+        Route::post('/compatibility', [ValidateController::class, 'compatibility'])->name('opendelivery.compatibility');
+        Route::post('/certify', [ValidateController::class, 'certify'])->name('opendelivery.certify');
+        Route::get('/schemas', function () {
+            return response()->json([
+                [
+                    'version' => '1.6.0',
+                    'name' => 'Latest Stable',
+                    'description' => 'Current stable version',
+                    'releaseDate' => '2024-01-15',
+                    'status' => 'stable',
+                    'isDefault' => true
+                ],
+                [
+                    'version' => '1.5.0',
+                    'name' => 'Previous Stable',
+                    'description' => 'Previous stable version',
+                    'releaseDate' => '2023-12-01',
+                    'status' => 'stable',
+                    'isDefault' => false
+                ],
+                [
+                    'version' => 'beta',
+                    'name' => 'Beta Version',
+                    'description' => 'Latest beta features',
+                    'releaseDate' => '2024-02-01',
+                    'status' => 'beta',
+                    'isDefault' => false
+                ]
+            ]);
+        })->name('opendelivery.schemas');
+    });
     
     // Health Check
     Route::get('/health', function () {

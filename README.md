@@ -1,4 +1,4 @@
-# OpenDelivery API Schema Validator 2
+    # OpenDelivery API Schema Validator 2
 
 [![CI/CD](https://github.com/marcioreck/opendelivery-api-schema-validator2/actions/workflows/ci.yml/badge.svg)](https://github.com/marcioreck/opendelivery-api-schema-validator2/actions/workflows/ci.yml)
 
@@ -47,8 +47,11 @@ opendelivery-api-schema-validator2/
 │   │   └── utils/            # Utilitários
 │   ├── schemas/              # Esquemas JSON das versões OpenDelivery
 │   │   ├── 1.0.0.yaml
+│   │   ├── 1.0.1.yaml
 │   │   ├── 1.1.0.yaml
+│   │   ├── 1.1.1.yaml
 │   │   ├── 1.2.0.yaml
+│   │   ├── 1.2.1.yaml
 │   │   ├── 1.3.0.yaml
 │   │   ├── 1.4.0.yaml
 │   │   ├── 1.5.0.yaml
@@ -139,18 +142,130 @@ A aplicação estará disponível em:
 - **Frontend**: http://localhost:8000
 - **API Backend**: http://localhost:3001
 
-### Laravel Package URLs:
-- **Laravel 10**: http://localhost:8010/opendelivery-api-schema-validator2
-- **Laravel 12**: http://localhost:8012/opendelivery-api-schema-validator2
 
 ## Laravel Package
 
 Este projeto também está disponível como um **pacote Laravel** para fácil integração em projetos Laravel existentes.
 
+### Laravel Package URLs:
+- **Laravel 10**: http://localhost:8010/opendelivery-api-schema-validator2
+- **Laravel 12**: http://localhost:8012/opendelivery-api-schema-validator2
+
+## Laravel Test App - Configuração MySQL
+
+### Configuração do .env
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravel_opendelivery_test
+# DB_DATABASE=laravel_opendelivery_test_v12 # for the other Laravel version
+DB_USERNAME=laravel
+DB_PASSWORD=laravel123
+```
+
+### Comandos para configurar MySQL (se necessário)
+```bash
+# Criar usuário MySQL
+sudo mysql -u root -p -e "CREATE USER 'laravel'@'localhost' IDENTIFIED BY 'laravel123';"
+
+# Criar banco de dados
+sudo mysql -u root -p -e "CREATE DATABASE laravel_opendelivery_test;"
+sudo mysql -u root -p -e "CREATE DATABASE laravel_opendelivery_test_v12;"
+
+# Dar permissões
+sudo mysql -u root -p -e "GRANT ALL PRIVILEGES ON laravel_opendelivery_test.* TO 'laravel'@'localhost';"
+sudo mysql -u root -p -e "GRANT ALL PRIVILEGES ON laravel_opendelivery_test_v12.* TO 'laravel'@'localhost';"
+sudo mysql -u root -p -e "FLUSH PRIVILEGES;"
+```
+
+### Servidores de Desenvolvimento
+```bash
+# Laravel 10.x (compatibilidade produção)
+cd laravel-test-app
+php artisan migrate:status
+php artisan migrate
+php artisan serve --host=127.0.0.1 --port=8010
+
+# Laravel 12.x (desenvolvimento)
+cd ../laravel-12-test-app
+php artisan migrate:status
+php artisan migrate
+php artisan serve --host=127.0.0.1 --port=8012
+
+# Frontend Standalone
+cd frontend
+npm run dev  # porta 8000
+```
+
 ### Instalação do Pacote Laravel
 
+#### Instalação via Composer (Produção)
 ```bash
 composer require opendelivery/laravel-validator
+```
+
+#### Configuração para Desenvolvimento Local
+Para desenvolvimento local, configure o `composer.json` dos projetos Laravel:
+
+**Laravel 10 (laravel-test-app/composer.json):**
+```json
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../packages/opendelivery/laravel-validator"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel/framework": "^10.10",
+        "opendelivery/laravel-validator": "dev-main"
+    }
+}
+```
+
+**Laravel 12 (laravel-12-test-app/composer.json):**
+```json
+{
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../packages/opendelivery/laravel-validator"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^12.0",
+        "opendelivery/laravel-validator": "dev-main"
+    }
+}
+```
+
+#### Comandos de Instalação
+```bash
+# Laravel 10
+cd laravel-test-app
+composer install
+
+# Laravel 12  
+cd ../laravel-12-test-app
+composer install
+```
+
+#### Build dos Assets React
+```bash
+# Fazer build dos assets React do pacote
+cd ../packages/opendelivery/laravel-validator
+npm install
+npm run build
+
+# Publicar assets buildados nos projetos Laravel
+cd ../../../laravel-test-app
+php artisan vendor:publish --provider="OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider" --tag=opendelivery-assets --force
+
+cd ../laravel-12-test-app
+php artisan vendor:publish --provider="OpenDelivery\\LaravelValidator\\OpenDeliveryServiceProvider" --tag=opendelivery-assets --force
 ```
 
 ### Publicação dos Assets
@@ -184,7 +299,6 @@ Após a instalação, as seguintes rotas estarão disponíveis:
 - **Schemas**: `GET /opendelivery-api-schema-validator2/schemas`
 
 ### Compatibilidade
-
 - **Laravel 10.x**: ✅ Totalmente compatível
 - **Laravel 12.x**: ✅ Totalmente compatível
 - **PHP 8.2+**: ✅ Recomendado

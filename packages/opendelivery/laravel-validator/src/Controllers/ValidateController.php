@@ -49,7 +49,7 @@ class ValidateController extends Controller
                 ], 400);
             }
 
-            $result = $this->validationService->checkCompatibility($fromVersion, $toVersion, $payload);
+            $result = $this->validationService->checkCompatibility($payload, $fromVersion, $toVersion);
             
             return response()->json([
                 'status' => 'success',
