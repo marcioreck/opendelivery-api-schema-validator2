@@ -123,8 +123,7 @@ Criar um pacote Laravel completo que integre backend e frontend do OpenDelivery 
 - ✅ **Laravel Package**: http://localhost:8010/opendelivery-api-schema-validator2/react
 
 ## 🔄 **PRÓXIMAS FASES**
-- Testes de payloads modelos em ambas as versões (pacote e standalone) estão dando respostas diferentes, será necessário alinhar e garantir o mesmo rigor tanto no standalone quanto no pacote Laravel.
-
+- Os testes manuais de payloads modelos em ambas as opções (pacote e standalone) estão dando respostas diferentes. Será necessário alinhar e garantir o mesmo rigor em todas as 11 versões de schemas da API OpenDelivery, tanto no standalone quanto no pacote Laravel. Sempre use os payloads modelos de test que já temos disponíveis na interface do frontend standalone. Use-os nos comandos curl.
 
 ### **Fase 7: Comandos Artisan** (Opcional)
 - [ ] `php artisan opendelivery:install` - Instalação inicial
